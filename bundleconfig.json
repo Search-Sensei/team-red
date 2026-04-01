@@ -1,0 +1,8 @@
+[
+  {
+    "outputFileName": "ClientApp/src/styles/sb-admin-2.min.css",
+    "inputFiles": [
+      "ClientApp/src/styles/sb-admin-2.css"
+    ]
+  }
+]

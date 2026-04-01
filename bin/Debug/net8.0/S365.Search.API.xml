@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>S365.Search.API</name>
+    </assembly>
+    <members>
+        <member name="T:S365.Search.API.Http.IApiConnection">
+            <summary>
+            Higher-level interface for executing API requests.
+            </summary>
+        </member>
+        <member name="T:S365.Search.API.Http.IApiRequestProcessor">
+            <summary>
+            Abstraction for building HTTP requests and parsing responses.
+            This separates the content/protocol logic from the execution.
+            </summary>
+        </member>
+    </members>
+</doc>

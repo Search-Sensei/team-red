@@ -1,0 +1,9 @@
+﻿.errorUserGroup {
+    color: red;
+    margin-left: 10px;
+    margin-bottom: 10px;
+}
+
+.inputUserGroup {
+    margin-bottom: 0px !important;
+}

@@ -1,0 +1,28 @@
+{
+  "files": {
+    "main.css": "/adminui/static/css/main.8ce5fe53.chunk.css",
+    "main.js": "/adminui/static/js/main.6d6cf812.chunk.js",
+    "main.js.map": "/adminui/static/js/main.6d6cf812.chunk.js.map",
+    "runtime-main.js": "/adminui/static/js/runtime-main.be0e0b58.js",
+    "runtime-main.js.map": "/adminui/static/js/runtime-main.be0e0b58.js.map",
+    "static/css/2.332ea7d5.chunk.css": "/adminui/static/css/2.332ea7d5.chunk.css",
+    "static/js/2.0fa19481.chunk.js": "/adminui/static/js/2.0fa19481.chunk.js",
+    "static/js/2.0fa19481.chunk.js.map": "/adminui/static/js/2.0fa19481.chunk.js.map",
+    "index.html": "/adminui/index.html",
+    "precache-manifest.a827a0da7c54a22fa09072f4f280c4f6.js": "/adminui/precache-manifest.a827a0da7c54a22fa09072f4f280c4f6.js",
+    "service-worker.js": "/adminui/service-worker.js",
+    "static/css/2.332ea7d5.chunk.css.map": "/adminui/static/css/2.332ea7d5.chunk.css.map",
+    "static/css/main.8ce5fe53.chunk.css.map": "/adminui/static/css/main.8ce5fe53.chunk.css.map",
+    "static/js/2.0fa19481.chunk.js.LICENSE.txt": "/adminui/static/js/2.0fa19481.chunk.js.LICENSE.txt",
+    "static/media/all.min.css": "/adminui/static/media/fa-solid-900.d824df7e.woff2",
+    "static/media/App.css": "/adminui/static/media/login-background.0f723985.jpg",
+    "static/media/sb-admin-2.min.css": "/adminui/static/media/login.2c42cba4.png"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.be0e0b58.js",
+    "static/css/2.332ea7d5.chunk.css",
+    "static/js/2.0fa19481.chunk.js",
+    "static/css/main.8ce5fe53.chunk.css",
+    "static/js/main.6d6cf812.chunk.js"
+  ]
+}

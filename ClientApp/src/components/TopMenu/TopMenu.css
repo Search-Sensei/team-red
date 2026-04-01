@@ -1,0 +1,35 @@
+.white-breadcrumb {
+    background-color: white !important;
+    margin-top: 15px !important;
+}
+
+.portlet {
+    max-height: 600px;
+}
+
+.heightTable {
+    max-height: 350px;
+}
+
+.subMenu.nav-item .subMenu-item.nav-link {
+    padding: 1rem;
+    padding-left: 2rem;
+    display: none;
+    font-size: .85rem;
+}
+
+.subMenu.nav-item .nav-link {
+    cursor: pointer
+}
+
+#content .navbar {
+    flex-direction: row-reverse;
+}
+
+.top-menu {
+    margin-right: 1rem;
+}
+
+.top-menu .account-icon {
+    margin-left: 0.5rem;
+}

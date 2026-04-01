@@ -1,0 +1,30 @@
+﻿.modal-dialog {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    min-width: 700px;
+}
+
+.modal-title {
+    width: 100%;
+    text-align: center;
+}
+
+.field-is {
+    margin-bottom: 20px;
+}
+
+.form-control {
+    margin-bottom: 20px;
+}
+
+.form-content.form-check {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+}
+
+.btn-modal-content.btn-primary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
