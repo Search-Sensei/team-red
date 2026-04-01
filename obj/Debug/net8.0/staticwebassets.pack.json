@@ -1,0 +1,933 @@
+{
+  "Files": [
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/android-icon-144x144.png",
+      "PackagePath": "staticwebassets/adminui/android-icon-144x144.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/android-icon-192x192.png",
+      "PackagePath": "staticwebassets/adminui/android-icon-192x192.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/android-icon-36x36.png",
+      "PackagePath": "staticwebassets/adminui/android-icon-36x36.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/android-icon-48x48.png",
+      "PackagePath": "staticwebassets/adminui/android-icon-48x48.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/android-icon-72x72.png",
+      "PackagePath": "staticwebassets/adminui/android-icon-72x72.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/android-icon-96x96.png",
+      "PackagePath": "staticwebassets/adminui/android-icon-96x96.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/apple-icon-114x114.png",
+      "PackagePath": "staticwebassets/adminui/apple-icon-114x114.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/apple-icon-120x120.png",
+      "PackagePath": "staticwebassets/adminui/apple-icon-120x120.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/apple-icon-144x144.png",
+      "PackagePath": "staticwebassets/adminui/apple-icon-144x144.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/apple-icon-152x152.png",
+      "PackagePath": "staticwebassets/adminui/apple-icon-152x152.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/apple-icon-180x180.png",
+      "PackagePath": "staticwebassets/adminui/apple-icon-180x180.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/apple-icon-57x57.png",
+      "PackagePath": "staticwebassets/adminui/apple-icon-57x57.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/apple-icon-60x60.png",
+      "PackagePath": "staticwebassets/adminui/apple-icon-60x60.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/apple-icon-72x72.png",
+      "PackagePath": "staticwebassets/adminui/apple-icon-72x72.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/apple-icon-76x76.png",
+      "PackagePath": "staticwebassets/adminui/apple-icon-76x76.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/apple-icon-precomposed.png",
+      "PackagePath": "staticwebassets/adminui/apple-icon-precomposed.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/apple-icon.png",
+      "PackagePath": "staticwebassets/adminui/apple-icon.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/asset-manifest.json",
+      "PackagePath": "staticwebassets/adminui/asset-manifest.json"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/favicon-16x16.png",
+      "PackagePath": "staticwebassets/adminui/favicon-16x16.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/favicon-32x32.png",
+      "PackagePath": "staticwebassets/adminui/favicon-32x32.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/favicon-96x96.png",
+      "PackagePath": "staticwebassets/adminui/favicon-96x96.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/favicon.ico",
+      "PackagePath": "staticwebassets/adminui/favicon.ico"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/index.html",
+      "PackagePath": "staticwebassets/adminui/index.html"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/manifest.json",
+      "PackagePath": "staticwebassets/adminui/manifest.json"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/ms-icon-144x144.png",
+      "PackagePath": "staticwebassets/adminui/ms-icon-144x144.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/ms-icon-150x150.png",
+      "PackagePath": "staticwebassets/adminui/ms-icon-150x150.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/ms-icon-310x310.png",
+      "PackagePath": "staticwebassets/adminui/ms-icon-310x310.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/ms-icon-70x70.png",
+      "PackagePath": "staticwebassets/adminui/ms-icon-70x70.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.045f0279f100d6327ee8692afbcb500d.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.045f0279f100d6327ee8692afbcb500d.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.1f0a93920f9243a09c1bc087c117a54a.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.1f0a93920f9243a09c1bc087c117a54a.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.2e64bbb997838753135b90e50cebc6d2.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.2e64bbb997838753135b90e50cebc6d2.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.429aeeea2283422525273ce2aebb5ff7.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.429aeeea2283422525273ce2aebb5ff7.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.519dfea4de9083b143d74761acf52d36.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.519dfea4de9083b143d74761acf52d36.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.61bee773b2327c461267b8aec9c48da6.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.61bee773b2327c461267b8aec9c48da6.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.62140d293af1a8439ba61fd321991f9a.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.62140d293af1a8439ba61fd321991f9a.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.70641c6d72e17e46ec99cc2f821def0b.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.70641c6d72e17e46ec99cc2f821def0b.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.73b8a657ad2e9b09a0a1fbcc2a7e801b.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.73b8a657ad2e9b09a0a1fbcc2a7e801b.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.73e7981bba7bd68f377368fbf9af83a8.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.73e7981bba7bd68f377368fbf9af83a8.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.8064e7625761adaa7c1da8645594f12f.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.8064e7625761adaa7c1da8645594f12f.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.889d109e426037b962ce6a634b31da9d.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.889d109e426037b962ce6a634b31da9d.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.8983bf34f1b0238949e741222e440924.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.8983bf34f1b0238949e741222e440924.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.8bb54cd1feb131ab5a822f444aaa2218.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.8bb54cd1feb131ab5a822f444aaa2218.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.97991226851ca17bbc879c76bb14e6f6.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.97991226851ca17bbc879c76bb14e6f6.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.9a6ad1c4f58ef4bfaabbd6e4c2c54243.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.9a6ad1c4f58ef4bfaabbd6e4c2c54243.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.a827a0da7c54a22fa09072f4f280c4f6.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.a827a0da7c54a22fa09072f4f280c4f6.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.b8cdb38c74b98e48b8f4b983b8b58b99.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.b8cdb38c74b98e48b8f4b983b8b58b99.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.bb5eec6738880c9a23894c76111d11fd.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.bb5eec6738880c9a23894c76111d11fd.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.c2483fe32445b760b17058a88f59d7a0.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.c2483fe32445b760b17058a88f59d7a0.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.c89d333349068547087dda467e0bc720.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.c89d333349068547087dda467e0bc720.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.ce9397c1c8ae0784b13672e38ff512ec.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.ce9397c1c8ae0784b13672e38ff512ec.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.d4eeb1cb09b2f1486c64eafece0dc8c8.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.d4eeb1cb09b2f1486c64eafece0dc8c8.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.e23fb80d445489f2fb654a948dcde7c1.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.e23fb80d445489f2fb654a948dcde7c1.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.e357363e7d3bafe7e7bee1cca55e5198.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.e357363e7d3bafe7e7bee1cca55e5198.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.e91953fc68ba0fb1525bf4ced5f9a315.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.e91953fc68ba0fb1525bf4ced5f9a315.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.edd912201afb86b11c9b23e4170207e1.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.edd912201afb86b11c9b23e4170207e1.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.f366f25dd7b91c3ec9e42f6d95ef1a56.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.f366f25dd7b91c3ec9e42f6d95ef1a56.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/precache-manifest.ff85dc306e0051a30aca4648c38325ef.js",
+      "PackagePath": "staticwebassets/adminui/precache-manifest.ff85dc306e0051a30aca4648c38325ef.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/robots.txt",
+      "PackagePath": "staticwebassets/adminui/robots.txt"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/service-worker.js",
+      "PackagePath": "staticwebassets/adminui/service-worker.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/css/2.1a123fb6.chunk.css",
+      "PackagePath": "staticwebassets/adminui/static/css/2.1a123fb6.chunk.css"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/css/2.332ea7d5.chunk.css",
+      "PackagePath": "staticwebassets/adminui/static/css/2.332ea7d5.chunk.css"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/css/2.332ea7d5.chunk.css.map",
+      "PackagePath": "staticwebassets/adminui/static/css/2.332ea7d5.chunk.css.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/css/main.379e5c23.chunk.css",
+      "PackagePath": "staticwebassets/adminui/static/css/main.379e5c23.chunk.css"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/css/main.8ce5fe53.chunk.css",
+      "PackagePath": "staticwebassets/adminui/static/css/main.8ce5fe53.chunk.css"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/css/main.8ce5fe53.chunk.css.map",
+      "PackagePath": "staticwebassets/adminui/static/css/main.8ce5fe53.chunk.css.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/css/main.aa62e758.css",
+      "PackagePath": "staticwebassets/adminui/static/css/main.aa62e758.css"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/2.0fa19481.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/2.0fa19481.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/2.0fa19481.chunk.js.LICENSE.txt",
+      "PackagePath": "staticwebassets/adminui/static/js/2.0fa19481.chunk.js.LICENSE.txt"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/2.0fa19481.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/2.0fa19481.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/2.33b1200d.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/2.33b1200d.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/2.33b1200d.chunk.js.LICENSE.txt",
+      "PackagePath": "staticwebassets/adminui/static/js/2.33b1200d.chunk.js.LICENSE.txt"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/2.94df4b6b.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/2.94df4b6b.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/2.94df4b6b.chunk.js.LICENSE.txt",
+      "PackagePath": "staticwebassets/adminui/static/js/2.94df4b6b.chunk.js.LICENSE.txt"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/2.94df4b6b.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/2.94df4b6b.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.1f1d5e53.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.1f1d5e53.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.1f1d5e53.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.1f1d5e53.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.214bd4ac.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.214bd4ac.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.26b9e739.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.26b9e739.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.26b9e739.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.26b9e739.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.38338cb9.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.38338cb9.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.38338cb9.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.38338cb9.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.3cc3cc0d.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.3cc3cc0d.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.3cc3cc0d.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.3cc3cc0d.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.3da2f446.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.3da2f446.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.3da2f446.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.3da2f446.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.494eee71.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.494eee71.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.494eee71.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.494eee71.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.56374e30.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.56374e30.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.5ae9ae1d.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.5ae9ae1d.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.61e47132.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.61e47132.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.62a8f76c.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.62a8f76c.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.62a8f76c.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.62a8f76c.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.6d6cf812.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.6d6cf812.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.6d6cf812.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.6d6cf812.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.74d6fb79.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.74d6fb79.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.74d6fb79.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.74d6fb79.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.915719fe.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.915719fe.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.915719fe.js.LICENSE.txt",
+      "PackagePath": "staticwebassets/adminui/static/js/main.915719fe.js.LICENSE.txt"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.964b8136.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.964b8136.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.964b8136.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.964b8136.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.973204d4.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.973204d4.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.973204d4.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.973204d4.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.a2afdd5e.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.a2afdd5e.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.aa94cf99.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.aa94cf99.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.b1031788.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.b1031788.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.b1031788.js.LICENSE.txt",
+      "PackagePath": "staticwebassets/adminui/static/js/main.b1031788.js.LICENSE.txt"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.b2212515.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.b2212515.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.b2212515.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.b2212515.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.b321cca8.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.b321cca8.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.b321cca8.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.b321cca8.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.b41095de.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.b41095de.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.b41095de.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.b41095de.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.b5a0ff57.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.b5a0ff57.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.b5a0ff57.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.b5a0ff57.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.b9ca3b5f.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.b9ca3b5f.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.b9ca3b5f.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.b9ca3b5f.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.c4872a87.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.c4872a87.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.c4872a87.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.c4872a87.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.c8da351b.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.c8da351b.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.c8da351b.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.c8da351b.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.ce1ea4ed.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.ce1ea4ed.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.ce1ea4ed.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.ce1ea4ed.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.d224d4bc.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.d224d4bc.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.d224d4bc.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.d224d4bc.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.d28a1e67.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.d28a1e67.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.dac52df5.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.dac52df5.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.dac52df5.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.dac52df5.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.ed5066e3.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.ed5066e3.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.ed5066e3.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.ed5066e3.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.f02b0792.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.f02b0792.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.f02b0792.js.LICENSE.txt",
+      "PackagePath": "staticwebassets/adminui/static/js/main.f02b0792.js.LICENSE.txt"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.f1faa16b.chunk.js",
+      "PackagePath": "staticwebassets/adminui/static/js/main.f1faa16b.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/main.f1faa16b.chunk.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/main.f1faa16b.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/runtime-main.be0e0b58.js",
+      "PackagePath": "staticwebassets/adminui/static/js/runtime-main.be0e0b58.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/js/runtime-main.be0e0b58.js.map",
+      "PackagePath": "staticwebassets/adminui/static/js/runtime-main.be0e0b58.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-brands-400.1a575a41.woff",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-brands-400.1a575a41.woff"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-brands-400.1d5619cd.svg",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-brands-400.1d5619cd.svg"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-brands-400.2285773e6b4b172f07d9.woff",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-brands-400.2285773e6b4b172f07d9.woff"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-brands-400.23f19bb08961f37aaf69.eot",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-brands-400.23f19bb08961f37aaf69.eot"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-brands-400.2f517e09eb2ca6650ff5.svg",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-brands-400.2f517e09eb2ca6650ff5.svg"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-brands-400.513aa607.ttf",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-brands-400.513aa607.ttf"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-brands-400.527940b104eb2ea366c8.ttf",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-brands-400.527940b104eb2ea366c8.ttf"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-brands-400.592643a8.eot",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-brands-400.592643a8.eot"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-brands-400.d878b0a6a1144760244f.woff2",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-brands-400.d878b0a6a1144760244f.woff2"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-brands-400.ed311c7a.woff2",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-brands-400.ed311c7a.woff2"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-regular-400.4689f52cc96215721344.svg",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-regular-400.4689f52cc96215721344.svg"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-regular-400.491974d108fe4002b2aa.ttf",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-regular-400.491974d108fe4002b2aa.ttf"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-regular-400.766913e6.ttf",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-regular-400.766913e6.ttf"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-regular-400.77206a6bb316fa0aded5.eot",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-regular-400.77206a6bb316fa0aded5.eot"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-regular-400.7a3337626410ca2f4071.woff2",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-regular-400.7a3337626410ca2f4071.woff2"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-regular-400.b0e2db3b.eot",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-regular-400.b0e2db3b.eot"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-regular-400.b91d376b.woff2",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-regular-400.b91d376b.woff2"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-regular-400.bb58e57c48a3e911f15f.woff",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-regular-400.bb58e57c48a3e911f15f.woff"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-regular-400.c5d109be.svg",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-regular-400.c5d109be.svg"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-regular-400.d1d7e3b4.woff",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-regular-400.d1d7e3b4.woff"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-solid-900.0c6bfc66.eot",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-solid-900.0c6bfc66.eot"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-solid-900.1551f4f60c37af51121f.woff2",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-solid-900.1551f4f60c37af51121f.woff2"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-solid-900.37bc7099.svg",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-solid-900.37bc7099.svg"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-solid-900.7a8b4f130182d19a2d7c.svg",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-solid-900.7a8b4f130182d19a2d7c.svg"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-solid-900.9bbb245e67a133f6e486.eot",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-solid-900.9bbb245e67a133f6e486.eot"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-solid-900.b9625119.ttf",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-solid-900.b9625119.ttf"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-solid-900.be9ee23c0c6390141475.ttf",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-solid-900.be9ee23c0c6390141475.ttf"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-solid-900.d745348d.woff",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-solid-900.d745348d.woff"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-solid-900.d824df7e.woff2",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-solid-900.d824df7e.woff2"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/fa-solid-900.eeccf4f66002c6f2ba24.woff",
+      "PackagePath": "staticwebassets/adminui/static/media/fa-solid-900.eeccf4f66002c6f2ba24.woff"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/login-background.0f723985.jpg",
+      "PackagePath": "staticwebassets/adminui/static/media/login-background.0f723985.jpg"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/login-background.f0a00c8ab2435cc58ec5.jpg",
+      "PackagePath": "staticwebassets/adminui/static/media/login-background.f0a00c8ab2435cc58ec5.jpg"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/login.2c42cba4.png",
+      "PackagePath": "staticwebassets/adminui/static/media/login.2c42cba4.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/adminui/static/media/login.38ca010ab7d819f0dffe.png",
+      "PackagePath": "staticwebassets/adminui/static/media/login.38ca010ab7d819f0dffe.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/android-icon-144x144.png",
+      "PackagePath": "staticwebassets/android-icon-144x144.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/android-icon-192x192.png",
+      "PackagePath": "staticwebassets/android-icon-192x192.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/android-icon-36x36.png",
+      "PackagePath": "staticwebassets/android-icon-36x36.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/android-icon-48x48.png",
+      "PackagePath": "staticwebassets/android-icon-48x48.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/android-icon-72x72.png",
+      "PackagePath": "staticwebassets/android-icon-72x72.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/android-icon-96x96.png",
+      "PackagePath": "staticwebassets/android-icon-96x96.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/apple-icon-114x114.png",
+      "PackagePath": "staticwebassets/apple-icon-114x114.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/apple-icon-120x120.png",
+      "PackagePath": "staticwebassets/apple-icon-120x120.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/apple-icon-144x144.png",
+      "PackagePath": "staticwebassets/apple-icon-144x144.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/apple-icon-152x152.png",
+      "PackagePath": "staticwebassets/apple-icon-152x152.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/apple-icon-180x180.png",
+      "PackagePath": "staticwebassets/apple-icon-180x180.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/apple-icon-57x57.png",
+      "PackagePath": "staticwebassets/apple-icon-57x57.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/apple-icon-60x60.png",
+      "PackagePath": "staticwebassets/apple-icon-60x60.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/apple-icon-72x72.png",
+      "PackagePath": "staticwebassets/apple-icon-72x72.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/apple-icon-76x76.png",
+      "PackagePath": "staticwebassets/apple-icon-76x76.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/apple-icon-precomposed.png",
+      "PackagePath": "staticwebassets/apple-icon-precomposed.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/apple-icon.png",
+      "PackagePath": "staticwebassets/apple-icon.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/asset-manifest.json",
+      "PackagePath": "staticwebassets/asset-manifest.json"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/favicon-16x16.png",
+      "PackagePath": "staticwebassets/favicon-16x16.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/favicon-32x32.png",
+      "PackagePath": "staticwebassets/favicon-32x32.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/favicon-96x96.png",
+      "PackagePath": "staticwebassets/favicon-96x96.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/favicon.ico",
+      "PackagePath": "staticwebassets/favicon.ico"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/index.html",
+      "PackagePath": "staticwebassets/index.html"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/manifest.json",
+      "PackagePath": "staticwebassets/manifest.json"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/ms-icon-144x144.png",
+      "PackagePath": "staticwebassets/ms-icon-144x144.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/ms-icon-150x150.png",
+      "PackagePath": "staticwebassets/ms-icon-150x150.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/ms-icon-310x310.png",
+      "PackagePath": "staticwebassets/ms-icon-310x310.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/ms-icon-70x70.png",
+      "PackagePath": "staticwebassets/ms-icon-70x70.png"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/precache-manifest.a827a0da7c54a22fa09072f4f280c4f6.js",
+      "PackagePath": "staticwebassets/precache-manifest.a827a0da7c54a22fa09072f4f280c4f6.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/robots.txt",
+      "PackagePath": "staticwebassets/robots.txt"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/service-worker.js",
+      "PackagePath": "staticwebassets/service-worker.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/css/2.332ea7d5.chunk.css",
+      "PackagePath": "staticwebassets/static/css/2.332ea7d5.chunk.css"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/css/2.332ea7d5.chunk.css.map",
+      "PackagePath": "staticwebassets/static/css/2.332ea7d5.chunk.css.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/css/main.8ce5fe53.chunk.css",
+      "PackagePath": "staticwebassets/static/css/main.8ce5fe53.chunk.css"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/css/main.8ce5fe53.chunk.css.map",
+      "PackagePath": "staticwebassets/static/css/main.8ce5fe53.chunk.css.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/js/2.0fa19481.chunk.js",
+      "PackagePath": "staticwebassets/static/js/2.0fa19481.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/js/2.0fa19481.chunk.js.LICENSE.txt",
+      "PackagePath": "staticwebassets/static/js/2.0fa19481.chunk.js.LICENSE.txt"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/js/2.0fa19481.chunk.js.map",
+      "PackagePath": "staticwebassets/static/js/2.0fa19481.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/js/main.6d6cf812.chunk.js",
+      "PackagePath": "staticwebassets/static/js/main.6d6cf812.chunk.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/js/main.6d6cf812.chunk.js.map",
+      "PackagePath": "staticwebassets/static/js/main.6d6cf812.chunk.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/js/runtime-main.be0e0b58.js",
+      "PackagePath": "staticwebassets/static/js/runtime-main.be0e0b58.js"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/js/runtime-main.be0e0b58.js.map",
+      "PackagePath": "staticwebassets/static/js/runtime-main.be0e0b58.js.map"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-brands-400.1a575a41.woff",
+      "PackagePath": "staticwebassets/static/media/fa-brands-400.1a575a41.woff"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-brands-400.1d5619cd.svg",
+      "PackagePath": "staticwebassets/static/media/fa-brands-400.1d5619cd.svg"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-brands-400.513aa607.ttf",
+      "PackagePath": "staticwebassets/static/media/fa-brands-400.513aa607.ttf"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-brands-400.592643a8.eot",
+      "PackagePath": "staticwebassets/static/media/fa-brands-400.592643a8.eot"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-brands-400.ed311c7a.woff2",
+      "PackagePath": "staticwebassets/static/media/fa-brands-400.ed311c7a.woff2"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-regular-400.766913e6.ttf",
+      "PackagePath": "staticwebassets/static/media/fa-regular-400.766913e6.ttf"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-regular-400.b0e2db3b.eot",
+      "PackagePath": "staticwebassets/static/media/fa-regular-400.b0e2db3b.eot"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-regular-400.b91d376b.woff2",
+      "PackagePath": "staticwebassets/static/media/fa-regular-400.b91d376b.woff2"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-regular-400.c5d109be.svg",
+      "PackagePath": "staticwebassets/static/media/fa-regular-400.c5d109be.svg"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-regular-400.d1d7e3b4.woff",
+      "PackagePath": "staticwebassets/static/media/fa-regular-400.d1d7e3b4.woff"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-solid-900.0c6bfc66.eot",
+      "PackagePath": "staticwebassets/static/media/fa-solid-900.0c6bfc66.eot"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-solid-900.37bc7099.svg",
+      "PackagePath": "staticwebassets/static/media/fa-solid-900.37bc7099.svg"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-solid-900.b9625119.ttf",
+      "PackagePath": "staticwebassets/static/media/fa-solid-900.b9625119.ttf"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-solid-900.d745348d.woff",
+      "PackagePath": "staticwebassets/static/media/fa-solid-900.d745348d.woff"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/fa-solid-900.d824df7e.woff2",
+      "PackagePath": "staticwebassets/static/media/fa-solid-900.d824df7e.woff2"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/login-background.0f723985.jpg",
+      "PackagePath": "staticwebassets/static/media/login-background.0f723985.jpg"
+    },
+    {
+      "Id": "/Users/macos/Search-Sensei/osp-search-ai-adminui/wwwroot/static/media/login.2c42cba4.png",
+      "PackagePath": "staticwebassets/static/media/login.2c42cba4.png"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.S365.Search.Admin.UI.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.build.S365.Search.Admin.UI.props",
+      "PackagePath": "build\\S365.Search.Admin.UI.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.S365.Search.Admin.UI.props",
+      "PackagePath": "buildMultiTargeting\\S365.Search.Admin.UI.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.S365.Search.Admin.UI.props",
+      "PackagePath": "buildTransitive\\S365.Search.Admin.UI.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

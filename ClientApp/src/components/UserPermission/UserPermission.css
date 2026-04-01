@@ -1,0 +1,47 @@
+﻿.permission {
+    width: 45%;
+}
+
+.view-permission {
+    width: 10%;
+}
+
+.input-permission {
+    width: 100%;
+}
+
+.userPermission {
+    max-height: 710px !important;
+}
+
+.save-permission {
+    text-align: right;
+    margin-right: 30px;
+    margin-top: 15px;
+}
+
+.listUserPermission {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+@media only screen and (max-width: 1024px) {
+    .permission {
+        width: 100%;
+    }
+
+    .listUserPermission {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        justify-content: center;
+    }
+
+    .permission-item {
+        width: 96%;
+    }
+
+        .permission-item .permission-item-input {
+            margin-left: 3%;
+        }
+}

@@ -1,0 +1,83 @@
+{
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:59546",
+      "sslPort": 44376
+    }
+  },
+  "profiles": {
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "commandLineArgs": "OIDCAuthentication:IsEnabled=false",
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "S365.Search.Display": {
+      "commandName": "Project",
+      "commandLineArgs": "OIDCAuthentication:IsEnabled=false",
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "Local.UtsTest": {
+      "commandName": "Project",
+      "commandLineArgs": "OIDCAuthentication:IsEnabled=false",
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "localUtsTest"
+      }
+    },
+    "Local.UtsProd": {
+      "commandName": "Project",
+      "commandLineArgs": "OIDCAuthentication:IsEnabled=false",
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "localUtsProd"
+      }
+    },
+    "S365.Search.Admin.UI.Dev": {
+      "commandName": "Project",
+      "commandLineArgs": "OIDCAuthentication:IsEnabled=true",
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "S365.Search.Admin.UI.localWUSDevReg1": {
+      "commandName": "Project",
+      "commandLineArgs": "",
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5002",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "localWUSDevReg1"
+      }
+    },
+    "S365.Search.Admin.UI.IbwusTest": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "",
+      "commandLineArgs": "OIDCAuthentication:IsEnabled=false",
+      "applicationUrl": "http://localhost:5000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "IbwusTest"
+      }
+    },
+    "S365.Search.Admin.UI.S365Dev": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:5023;http://localhost:5024",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "S365Dev"
+      }
+    }
+  }
+}
