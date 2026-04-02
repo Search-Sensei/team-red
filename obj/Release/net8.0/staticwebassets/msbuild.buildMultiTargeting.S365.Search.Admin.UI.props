@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="../build/S365.Search.Admin.UI.props" />
-</Project>
