@@ -88,9 +88,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\osp-search-ai-api\Libraries\S365.Search.Core\S365.Search.Core.csproj" />
-		<ProjectReference Include="..\osp-search-ai-api\Libraries\S365.Search.Suggestion\S365.Search.Suggestion.csproj" />
-		<ProjectReference Include="..\osp-search-ai-api\Libraries\S365.Startup.Core\S365.Startup.Core.csproj" />
+		<PackageReference Include="S365.Search.Core" Version="1.0.0" />
+		<PackageReference Include="S365.Search.Suggestion" Version="1.0.0" />
+		<PackageReference Include="S365.Startup.Core" Version="1.0.0" />
 	</ItemGroup>
 
 	<Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

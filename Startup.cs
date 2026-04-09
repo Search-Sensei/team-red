@@ -68,7 +68,6 @@ namespace S365.Search.Admin.UI
                 return new ConfigurationService(configuration, applicationConfiguration, documentClient, databaseServices);
             });
 
-            services.AddSingleton<IOpenSearchConnectionService, OpenSearchConnectionService>();
 
             services.AddHttpClient<KeycloakService>();
             services.AddScoped<KeycloakService>();
