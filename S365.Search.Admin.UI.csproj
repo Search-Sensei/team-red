@@ -88,9 +88,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="S365.Search.API" Version="1.0.0" />
 		<PackageReference Include="S365.Search.Core" Version="1.0.0" />
+		<PackageReference Include="S365.Search.Navigation" Version="1.0.0" />
 		<PackageReference Include="S365.Search.Suggestion" Version="1.0.0" />
 		<PackageReference Include="S365.Startup.Core" Version="1.0.0" />
+		<PackageReference Include="S365.Swagger.Core" Version="1.0.0" />
 	</ItemGroup>
 
 	<Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">
