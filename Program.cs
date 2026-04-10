@@ -17,7 +17,7 @@ namespace S365.Search.Admin.UI
                 {
                     // Get the environment from ASPNETCORE_ENVIRONMENT variable
                     var environment = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
-                    
+
                     // Add environment variables first
                     config.AddEnvironmentVariables();
 
@@ -51,13 +51,13 @@ namespace S365.Search.Admin.UI
                     {
                         springOverrides["Spring:Cloud:Config:FailFast"] = failFast.ToString();
                     }
-                    
+
                     // Override Spring settings from environment variables when available
                     config.AddInMemoryCollection(springOverrides);
-                    
+
                     // Add Steeltoe ConfigServer for Spring Cloud Config integration
                     config.AddConfigServer();
-                    
+
                     // Re-add environment variables AFTER ConfigServer so Azure App Service
                     // Application Settings can override Spring Cloud Config values.
                     // Azure env var pattern: KeycloakAuthentication__IsEnabled=false

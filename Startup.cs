@@ -49,14 +49,14 @@ namespace S365.Search.Admin.UI
                 options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
                 options.EnableAnnotations();
             });
-            
+
             // Add Keycloak Authentication
             services.AddKeycloakAuthentication(Configuration);
-            
+
             // Register all default search services (including IUserPermissionsService)
             services.RegisterDefaultSearchServices();
             services.AddSingleton<IUserService, UserService>();
-            
+
             // Register ConfigurationService
             services.AddScoped<IConfigurationService>(serviceProvider =>
             {
@@ -76,14 +76,15 @@ namespace S365.Search.Admin.UI
             services.AddScoped<IUserContextResolver, UserContextResolver>();
             services.AddScoped<ITenantContextService, TenantContextService>();
             services.AddScoped<ITokenRefreshService, TokenRefreshService>();
-            
+
             // Register HttpClient for proxy controllers
             services.AddHttpClient("ExternalBackendClient", client =>
             {
                 client.Timeout = System.TimeSpan.FromSeconds(120);
             });
 
-            services.AddControllers().ConfigureApiBehaviorOptions(options => {
+            services.AddControllers().ConfigureApiBehaviorOptions(options =>
+            {
                 options.InvalidModelStateResponseFactory = context =>
                 {
                     var problemDetails = new ValidationProblemDetails(context.ModelState)
@@ -132,7 +133,7 @@ namespace S365.Search.Admin.UI
                             QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                             QueueLimit = 0
                         });
-                
+
                 });
 
                 options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -165,9 +166,9 @@ namespace S365.Search.Admin.UI
                 context.Response.Headers["X-AspNetMvc-Version"] = "";
                 context.Response.Headers.Append("Content-Security-Policy", "frame-ancestors none;");
                 if (!env.IsDevelopment())
-                    {
-                        context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
-                    }
+                {
+                    context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
+                }
                 await next();
             });
 
@@ -217,7 +218,7 @@ namespace S365.Search.Admin.UI
                     Path.Combine(env.ContentRootPath, "wwwroot")
                 )
             });
-            
+
             // Also serve files from /adminui path to handle the base href correctly
             app.UseStaticFiles(new StaticFileOptions
             {
@@ -257,7 +258,6 @@ namespace S365.Search.Admin.UI
                 });
             });
 
-            app.UseSwagger();
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
