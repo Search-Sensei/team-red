@@ -24,6 +24,7 @@ artifacts/
 
 # ASP.NET
 wwwroot/dist/
+wwwroot/adminui/
 
 # Secrets & environment
 appsettings.Development.json
