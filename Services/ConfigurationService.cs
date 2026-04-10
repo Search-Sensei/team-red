@@ -104,12 +104,12 @@ namespace S365.Search.Admin.UI.Services
                 return "Database services are not configured";
             }
 
-            if (await documentClient.DatabaseExistsAsync(request.DatabaseName))
-            {
-                return "Database name already exists";
-            }
+            // if (await documentClient.DatabaseExistsAsync(request.DatabaseName))
+            // {
+            //     return "Database name already exists";
+            // }
 
-            await documentClient.CreateDatabaseIfNotExistsAsync(request.DatabaseName);
+            // await documentClient.CreateDatabaseIfNotExistsAsync(request.DatabaseName);
 
             await databaseServices.RetrieveDocumentsAsync<QueryRule>(databaseCollectionQueryRulesName);
             await databaseServices.RetrieveDocumentsAsync<Synonym>(databaseCollectionSynonymsName);
