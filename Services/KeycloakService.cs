@@ -301,7 +301,8 @@ namespace S365.Search.Admin.UI.Services
                 },
                 attributes = new Dictionary<string, string[]>
                 {
-                    { "active_tenant", new[] { orgName } }
+                    { "active_tenant", new[] { orgName } },
+                    { "tenants", new[] { orgName } }
                 }
             };
 
@@ -336,10 +337,11 @@ namespace S365.Search.Admin.UI.Services
             if (string.IsNullOrWhiteSpace(realm))
                 throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
 
-            var url = $"/admin/realms/{realm}/organizations/{orgId}/members/{userId}";
+            var url = $"/admin/realms/{realm}/organizations/{orgId}/members";
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
-            var response = await _httpClient.PutAsync(url, null);
+            var content = new StringContent(userId, Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync(url, content);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -349,7 +351,7 @@ namespace S365.Search.Admin.UI.Services
             }
         }
 
-        public async Task AssignOrganizationAdminRoleAsync(string adminToken, string orgId, string userId)
+        public async Task DeleteOrganizationAsync(string adminToken, string orgId)
         {
             EnsureEnabled();
 
@@ -357,63 +359,57 @@ namespace S365.Search.Admin.UI.Services
             if (string.IsNullOrWhiteSpace(realm))
                 throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
 
+            var url = $"/admin/realms/{realm}/organizations/{orgId}";
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.DeleteAsync(url);
 
-            // Step 1: Get existing organization roles, look for "admin"
-            var rolesUrl = $"/admin/realms/{realm}/organizations/{orgId}/roles";
-            var rolesResponse = await _httpClient.GetAsync(rolesUrl);
-            rolesResponse.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("Rollback: Failed to delete organization {OrgId}: {Status} {Error}", orgId, response.StatusCode, error);
+            }
+        }
 
-            var rolesJson = await rolesResponse.Content.ReadAsStringAsync();
-            var roles = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(rolesJson)
+        public async Task DeleteUserAsync(string adminToken, string userId)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/users/{userId}";
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.DeleteAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("Rollback: Failed to delete user {UserId}: {Status} {Error}", userId, response.StatusCode, error);
+            }
+        }
+
+        public async Task<List<string>> GetUserOrganizationsAsync(string adminToken, string userId)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/organizations?memberUserId={userId}";
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var orgs = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(json)
                 ?? new List<Dictionary<string, object>>();
 
-            var adminRole = roles.FirstOrDefault(r =>
-                r.TryGetValue("name", out var name) && name?.ToString() == "admin");
-
-            // Step 2: If "admin" role doesn't exist, create it
-            if (adminRole == null)
-            {
-                var createRolePayload = new { name = "admin", description = "Organization administrator" };
-                var createContent = new StringContent(
-                    System.Text.Json.JsonSerializer.Serialize(createRolePayload),
-                    Encoding.UTF8,
-                    "application/json");
-
-                var createResponse = await _httpClient.PostAsync(rolesUrl, createContent);
-                if (!createResponse.IsSuccessStatusCode)
-                {
-                    var error = await createResponse.Content.ReadAsStringAsync();
-                    _logger.LogError("Failed to create admin role for organization {OrgId}: {Status} {Error}", orgId, createResponse.StatusCode, error);
-                    throw new Exception($"Failed to create admin role: {createResponse.StatusCode} - {error}");
-                }
-
-                // Re-fetch roles to get the full role representation with id
-                rolesResponse = await _httpClient.GetAsync(rolesUrl);
-                rolesResponse.EnsureSuccessStatusCode();
-                rolesJson = await rolesResponse.Content.ReadAsStringAsync();
-                roles = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(rolesJson)
-                    ?? new List<Dictionary<string, object>>();
-
-                adminRole = roles.FirstOrDefault(r =>
-                    r.TryGetValue("name", out var name) && name?.ToString() == "admin")
-                    ?? throw new Exception("Admin role was created but could not be retrieved.");
-            }
-
-            // Step 3: Assign the admin role to the user
-            var assignUrl = $"/admin/realms/{realm}/organizations/{orgId}/members/{userId}/roles";
-            var assignContent = new StringContent(
-                System.Text.Json.JsonSerializer.Serialize(new[] { adminRole }),
-                Encoding.UTF8,
-                "application/json");
-
-            var assignResponse = await _httpClient.PutAsync(assignUrl, assignContent);
-            if (!assignResponse.IsSuccessStatusCode)
-            {
-                var error = await assignResponse.Content.ReadAsStringAsync();
-                _logger.LogError("Failed to assign admin role to user {UserId} in organization {OrgId}: {Status} {Error}", userId, orgId, assignResponse.StatusCode, error);
-                throw new Exception($"Failed to assign admin role: {assignResponse.StatusCode} - {error}");
-            }
+            return orgs
+                .Where(o => o.TryGetValue("name", out var name) && name != null)
+                .Select(o => o["name"].ToString()!)
+                .ToList();
         }
 
         public async Task<SwitchContextResponse> SwitchContextAsync(SwitchContextRequest request)
