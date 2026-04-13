@@ -234,6 +234,188 @@ namespace S365.Search.Admin.UI.Services
             putResponse.EnsureSuccessStatusCode();
         }
 
+        public async Task<string> CreateOrganizationAsync(string adminToken, string name, string address, string contactPerson, string contactPhone)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/organizations";
+
+            var orgPayload = new
+            {
+                name = name,
+                enabled = true,
+                attributes = new Dictionary<string, string[]>
+                {
+                    { "address", new[] { address } },
+                    { "contactPerson", new[] { contactPerson } },
+                    { "contactPhone", new[] { contactPhone } }
+                }
+            };
+
+            var content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(orgPayload),
+                Encoding.UTF8,
+                "application/json");
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.PostAsync(url, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to create organization: {Status} {Error}", response.StatusCode, error);
+                throw new Exception($"Failed to create organization: {response.StatusCode} - {error}");
+            }
+
+            var locationHeader = response.Headers.Location?.ToString();
+            if (string.IsNullOrEmpty(locationHeader))
+                throw new Exception("Keycloak did not return a Location header for the created organization.");
+
+            var orgId = locationHeader.Split('/').Last();
+            return orgId;
+        }
+
+        public async Task<string> CreateUserAsync(string adminToken, string email, string password, string firstName, string orgName)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/users";
+
+            var userPayload = new
+            {
+                username = email,
+                email = email,
+                firstName = firstName,
+                enabled = true,
+                credentials = new[]
+                {
+                    new { type = "password", value = password, temporary = false }
+                },
+                attributes = new Dictionary<string, string[]>
+                {
+                    { "active_tenant", new[] { orgName } }
+                }
+            };
+
+            var content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(userPayload),
+                Encoding.UTF8,
+                "application/json");
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.PostAsync(url, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to create user: {Status} {Error}", response.StatusCode, error);
+                throw new Exception($"Failed to create user: {response.StatusCode} - {error}");
+            }
+
+            var locationHeader = response.Headers.Location?.ToString();
+            if (string.IsNullOrEmpty(locationHeader))
+                throw new Exception("Keycloak did not return a Location header for the created user.");
+
+            var userId = locationHeader.Split('/').Last();
+            return userId;
+        }
+
+        public async Task AddUserToOrganizationAsync(string adminToken, string orgId, string userId)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/organizations/{orgId}/members/{userId}";
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.PutAsync(url, null);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to add user {UserId} to organization {OrgId}: {Status} {Error}", userId, orgId, response.StatusCode, error);
+                throw new Exception($"Failed to add user to organization: {response.StatusCode} - {error}");
+            }
+        }
+
+        public async Task AssignOrganizationAdminRoleAsync(string adminToken, string orgId, string userId)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+            // Step 1: Get existing organization roles, look for "admin"
+            var rolesUrl = $"/admin/realms/{realm}/organizations/{orgId}/roles";
+            var rolesResponse = await _httpClient.GetAsync(rolesUrl);
+            rolesResponse.EnsureSuccessStatusCode();
+
+            var rolesJson = await rolesResponse.Content.ReadAsStringAsync();
+            var roles = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(rolesJson)
+                ?? new List<Dictionary<string, object>>();
+
+            var adminRole = roles.FirstOrDefault(r =>
+                r.TryGetValue("name", out var name) && name?.ToString() == "admin");
+
+            // Step 2: If "admin" role doesn't exist, create it
+            if (adminRole == null)
+            {
+                var createRolePayload = new { name = "admin", description = "Organization administrator" };
+                var createContent = new StringContent(
+                    System.Text.Json.JsonSerializer.Serialize(createRolePayload),
+                    Encoding.UTF8,
+                    "application/json");
+
+                var createResponse = await _httpClient.PostAsync(rolesUrl, createContent);
+                if (!createResponse.IsSuccessStatusCode)
+                {
+                    var error = await createResponse.Content.ReadAsStringAsync();
+                    _logger.LogError("Failed to create admin role for organization {OrgId}: {Status} {Error}", orgId, createResponse.StatusCode, error);
+                    throw new Exception($"Failed to create admin role: {createResponse.StatusCode} - {error}");
+                }
+
+                // Re-fetch roles to get the full role representation with id
+                rolesResponse = await _httpClient.GetAsync(rolesUrl);
+                rolesResponse.EnsureSuccessStatusCode();
+                rolesJson = await rolesResponse.Content.ReadAsStringAsync();
+                roles = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(rolesJson)
+                    ?? new List<Dictionary<string, object>>();
+
+                adminRole = roles.FirstOrDefault(r =>
+                    r.TryGetValue("name", out var name) && name?.ToString() == "admin")
+                    ?? throw new Exception("Admin role was created but could not be retrieved.");
+            }
+
+            // Step 3: Assign the admin role to the user
+            var assignUrl = $"/admin/realms/{realm}/organizations/{orgId}/members/{userId}/roles";
+            var assignContent = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(new[] { adminRole }),
+                Encoding.UTF8,
+                "application/json");
+
+            var assignResponse = await _httpClient.PutAsync(assignUrl, assignContent);
+            if (!assignResponse.IsSuccessStatusCode)
+            {
+                var error = await assignResponse.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to assign admin role to user {UserId} in organization {OrgId}: {Status} {Error}", userId, orgId, assignResponse.StatusCode, error);
+                throw new Exception($"Failed to assign admin role: {assignResponse.StatusCode} - {error}");
+            }
+        }
+
         public async Task<SwitchContextResponse> SwitchContextAsync(SwitchContextRequest request)
         {
             EnsureEnabled();

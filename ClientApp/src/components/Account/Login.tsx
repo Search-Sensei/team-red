@@ -304,6 +304,11 @@ const Login: React.FC = () => {
                     </div>
                     <Button className="btn btn-secondary" href={loginHref + (email != "" ? "?email=" + email + "&" : "?") + (`returnUrl=${window.location.href}${redirect}`)} hidden={showLogOut} onClick={() => setIsLoggingIn(true)}>Login</Button>
                     <Button className="btn btn-secondary" href={logoutHref} hidden={!showLogOut} onClick={() => { ["accessToken", "refreshToken", "timestamp", "token_type", "expires_in", "refresh_expires_in", "session_state", "scope", "not_before_policy"].forEach(k => localStorage.removeItem(k)); setIsLoggingOut(true); }}>Logout</Button>
+                    <hr hidden={showLogOut} />
+                    <div hidden={showLogOut}>
+                        <p className="text-muted mb-2">Don't have an account?</p>
+                        <a href="/portal/register" className="btn btn-outline-primary">Register Your Organisation</a>
+                    </div>
                 </div>
             );
         }
