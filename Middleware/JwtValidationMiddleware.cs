@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using S365.Search.Admin.UI.Models;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -21,16 +23,47 @@ namespace S365.Search.Admin.UI.Middleware
         private readonly ILogger<JwtValidationMiddleware> _logger;
         private readonly string _issuer;
         private readonly string _clientId;
+        private readonly KeycloakTokenSettings _tokenSettings;
 
         public JwtValidationMiddleware(
             RequestDelegate next,
             IConfiguration configuration,
+            IOptions<KeycloakTokenSettings> tokenSettings,
             ILogger<JwtValidationMiddleware> logger)
         {
             _next = next;
             _logger = logger;
             _issuer = configuration["KeycloakAuthentication:Authority"] ?? string.Empty;
             _clientId = configuration["KeycloakAuthentication:ClientId"] ?? string.Empty;
+            _tokenSettings = tokenSettings.Value;
+
+            // Warn when expiry settings are absent so operators know defaults are in effect.
+            if (configuration["KeycloakAuthentication:AccessTokenExpirySeconds"] == null)
+                _logger.LogWarning(
+                    "KeycloakAuthentication:AccessTokenExpirySeconds is not configured. " +
+                    "Falling back to default of {Default}s. " +
+                    "Ensure this matches your Keycloak realm's 'Access Token Lifespan'.",
+                    KeycloakTokenSettings.DefaultAccessTokenExpirySeconds);
+
+            if (configuration["KeycloakAuthentication:RefreshTokenExpirySeconds"] == null)
+                _logger.LogWarning(
+                    "KeycloakAuthentication:RefreshTokenExpirySeconds is not configured. " +
+                    "Falling back to default of {Default}s.",
+                    KeycloakTokenSettings.DefaultRefreshTokenExpirySeconds);
+
+            if (configuration["KeycloakAuthentication:SilentRefreshThresholdSeconds"] == null)
+                _logger.LogWarning(
+                    "KeycloakAuthentication:SilentRefreshThresholdSeconds is not configured. " +
+                    "Falling back to default of {Default}s.",
+                    KeycloakTokenSettings.DefaultSilentRefreshThresholdSeconds);
+
+            _logger.LogInformation(
+                "JwtValidationMiddleware initialised: " +
+                "AccessTokenExpiry={AccessExpiry}s, RefreshTokenExpiry={RefreshExpiry}s, " +
+                "SilentRefreshThreshold={Threshold}s.",
+                _tokenSettings.AccessTokenExpirySeconds,
+                _tokenSettings.RefreshTokenExpirySeconds,
+                _tokenSettings.SilentRefreshThresholdSeconds);
         }
 
         public async Task InvokeAsync(
@@ -81,20 +114,20 @@ namespace S365.Search.Admin.UI.Middleware
                 // when a token references an unknown key ID (handles key rotation).
                 var oidcConfig = await configManager.GetConfigurationAsync(CancellationToken.None);
 
-                var validationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidIssuer = _issuer,
-                    ValidateAudience = true,
-                    ValidAudiences = new[] { _clientId, "account" },
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKeys = oidcConfig.SigningKeys,
-                    ClockSkew = TimeSpan.FromSeconds(30)
-                };
+                var validationParameters = BuildValidationParameters(oidcConfig.SigningKeys);
 
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
+
+                // Enforce the app-configured expiry window on top of standard lifetime validation.
+                // This rejects tokens whose age exceeds AccessTokenExpirySeconds even when the
+                // Keycloak realm is misconfigured with a longer access-token lifespan.
+                if (!IsWithinConfiguredExpiryWindow(validatedToken, out var ageReason))
+                {
+                    _logger.LogInformation("JWT rejected: {Reason}", ageReason);
+                    await WriteUnauthorized(context, "Token has exceeded the configured expiry window.");
+                    return;
+                }
 
                 _logger.LogDebug(
                     "JWT validated for subject {Subject}, expires {Expiry}.",
@@ -120,22 +153,19 @@ namespace S365.Search.Admin.UI.Middleware
                 try
                 {
                     var refreshedConfig = await configManager.GetConfigurationAsync(CancellationToken.None);
-                    var validationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidIssuer = _issuer,
-                        ValidateAudience = true,
-                        ValidAudiences = new[] { _clientId, "account" },
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKeys = refreshedConfig.SigningKeys,
-                        ClockSkew = TimeSpan.FromSeconds(30)
-                    };
+                    var validationParameters = BuildValidationParameters(refreshedConfig.SigningKeys);
 
                     var tokenHandler = new JwtSecurityTokenHandler();
-                    var principal = tokenHandler.ValidateToken(token, validationParameters, out _);
-                    context.User = principal;
+                    var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
 
+                    if (!IsWithinConfiguredExpiryWindow(validatedToken, out var ageReason))
+                    {
+                        _logger.LogInformation("JWT rejected after JWKS refresh: {Reason}", ageReason);
+                        await WriteUnauthorized(context, "Token has exceeded the configured expiry window.");
+                        return;
+                    }
+
+                    context.User = principal;
                     await _next(context);
                 }
                 catch (SecurityTokenException ex)
@@ -154,6 +184,53 @@ namespace S365.Search.Admin.UI.Middleware
                 _logger.LogError(ex, "Unexpected error during JWT validation.");
                 await WriteUnauthorized(context, "Authentication error.");
             }
+        }
+
+        /// <summary>
+        /// Checks whether the token's age (now − iat) is within the configured
+        /// <see cref="KeycloakTokenSettings.AccessTokenExpirySeconds"/> window.
+        /// A 30-second clock-skew allowance is applied.
+        /// Returns <c>true</c> if the token is still within the window.
+        /// </summary>
+        private bool IsWithinConfiguredExpiryWindow(SecurityToken validatedToken, out string reason)
+        {
+            reason = string.Empty;
+
+            if (validatedToken is not JwtSecurityToken jwt)
+                return true; // Cannot inspect — defer to standard lifetime validation
+
+            var issuedAt = jwt.IssuedAt; // UTC DateTime; DateTime.MinValue when claim is absent
+            if (issuedAt == DateTime.MinValue)
+                return true; // No iat claim — defer to exp-based validation
+
+            var clockSkew = TimeSpan.FromSeconds(30);
+            var configuredExpiry = issuedAt.AddSeconds(_tokenSettings.AccessTokenExpirySeconds);
+
+            if (DateTime.UtcNow > configuredExpiry.Add(clockSkew))
+            {
+                reason = $"Token age exceeds configured AccessTokenExpirySeconds " +
+                         $"({_tokenSettings.AccessTokenExpirySeconds}s). " +
+                         $"Issued at {issuedAt:O}, checked at {DateTime.UtcNow:O}.";
+                return false;
+            }
+
+            return true;
+        }
+
+        private TokenValidationParameters BuildValidationParameters(
+            System.Collections.Generic.IEnumerable<SecurityKey> signingKeys)
+        {
+            return new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = _issuer,
+                ValidateAudience = true,
+                ValidAudiences = new[] { _clientId, "account" },
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKeys = signingKeys,
+                ClockSkew = TimeSpan.FromSeconds(30)
+            };
         }
 
         private static Task WriteUnauthorized(HttpContext context, string message)

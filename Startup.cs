@@ -18,6 +18,7 @@ using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using S365.Search.Admin.UI.Extensions;
 using S365.Search.Admin.UI.Middleware;
+using S365.Search.Admin.UI.Models;
 using S365.Search.Admin.UI.Services;
 using S365.Search.Core.Service;
 using S365.Startup.Core.Helpers;
@@ -49,6 +50,9 @@ namespace S365.Search.Admin.UI
                 options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
                 options.EnableAnnotations();
             });
+
+            // Bind token expiry settings from KeycloakAuthentication config section
+            services.Configure<KeycloakTokenSettings>(Configuration.GetSection("KeycloakAuthentication"));
 
             // Add Keycloak Authentication
             services.AddKeycloakAuthentication(Configuration);

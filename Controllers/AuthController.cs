@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using S365.Search.Admin.UI.Models;
 using S365.Search.Admin.UI.Services;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Security.Claims;
@@ -18,10 +20,12 @@ namespace S365.Search.Admin.UI.Controllers
     public class AuthController : Controller
     {
         private readonly bool _keycloakEnabled;
+        private readonly KeycloakTokenSettings _tokenSettings;
 
-        public AuthController(IConfiguration configuration)
+        public AuthController(IConfiguration configuration, IOptions<KeycloakTokenSettings> tokenSettings)
         {
             _keycloakEnabled = configuration.GetValue<bool>("KeycloakAuthentication:IsEnabled");
+            _tokenSettings = tokenSettings.Value;
         }
 
         [SwaggerOperation(Summary = "Account login with email prefill", 
@@ -235,8 +239,9 @@ namespace S365.Search.Admin.UI.Controllers
                 id_token = idToken,
                 refresh_token = refreshToken,
                 token_type = "Bearer",
-                expires_in = int.TryParse(expiresIn, out var ei) ? ei : 300,
-                refresh_expires_in = int.TryParse(refreshExpiresIn, out var rei) ? rei : 1800,
+                expires_in = int.TryParse(expiresIn, out var ei) ? ei : _tokenSettings.AccessTokenExpirySeconds,
+                refresh_expires_in = int.TryParse(refreshExpiresIn, out var rei) ? rei : _tokenSettings.RefreshTokenExpirySeconds,
+                silent_refresh_threshold_seconds = _tokenSettings.SilentRefreshThresholdSeconds,
                 session_state = sessionState ?? "",
                 scope = scope ?? "email profile",
                 not_before_policy = int.TryParse(notBeforePolicy, out var nbp) ? nbp : 0
@@ -282,8 +287,9 @@ namespace S365.Search.Admin.UI.Controllers
                 id_token = result.IdToken,
                 refresh_token = result.RefreshToken,
                 token_type = "Bearer",
-                expires_in = result.ExpiresIn,
-                refresh_expires_in = result.RefreshExpiresIn,
+                expires_in = result.ExpiresIn > 0 ? result.ExpiresIn : _tokenSettings.AccessTokenExpirySeconds,
+                refresh_expires_in = result.RefreshExpiresIn > 0 ? result.RefreshExpiresIn : _tokenSettings.RefreshTokenExpirySeconds,
+                silent_refresh_threshold_seconds = _tokenSettings.SilentRefreshThresholdSeconds,
                 session_state = result.SessionState ?? "",
                 scope = result.Scope ?? "email profile",
                 not_before_policy = result.NotBeforePolicy

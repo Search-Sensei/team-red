@@ -3,14 +3,12 @@
  * - Checks if token is expired
  * - Automatically refreshes token when expired
  * - Handles logout when refresh fails
+ *
+ * SilentRefreshThresholdSeconds is server-driven: it is returned by /api/token
+ * and /api/auth/refresh as silent_refresh_threshold_seconds and persisted in
+ * localStorage so that the configured value is respected across page reloads
+ * without an additional network round-trip.
  */
-
-interface TokenData {
-    accessToken: string;
-    refreshToken?: string;
-    timestamp: number;
-    expiresIn: number;
-}
 
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
@@ -59,12 +57,33 @@ export const TokenService = {
     },
 
     /**
-     * Check if token is expired (with 60 second buffer)
+     * Get the server-configured silent refresh threshold in seconds.
+     * Falls back to 60 seconds when the value has not yet been received from the server.
      */
-    isTokenExpired(bufferSeconds: number = 60): boolean {
+    getSilentRefreshThresholdSeconds(): number {
+        const stored = localStorage.getItem("silent_refresh_threshold_seconds");
+        if (stored !== null) {
+            const parsed = parseInt(stored, 10);
+            if (!isNaN(parsed) && parsed > 0) return parsed;
+        }
+        return 60;
+    },
+
+    /**
+     * Check if the token is within the silent-refresh window.
+     * Returns true (i.e. "expired" from the client's perspective) when the
+     * remaining token lifetime is less than SilentRefreshThresholdSeconds.
+     *
+     * @param bufferSeconds Override the server-configured threshold. Useful in
+     *   tests. When omitted the stored silent_refresh_threshold_seconds is used.
+     */
+    isTokenExpired(bufferSeconds?: number): boolean {
+        const threshold = bufferSeconds !== undefined
+            ? bufferSeconds
+            : this.getSilentRefreshThresholdSeconds();
         const timestamp = this.getTokenTimestamp();
         const now = Date.now();
-        const expiryTime = timestamp - bufferSeconds * 1000; // 60 second buffer
+        const expiryTime = timestamp - threshold * 1000;
         return now >= expiryTime;
     },
 
@@ -97,6 +116,14 @@ export const TokenService = {
         if (response.not_before_policy) {
             localStorage.setItem("not_before_policy", response.not_before_policy.toString());
         }
+        // Persist the server-configured silent refresh threshold so that it
+        // survives page reloads without needing a fresh /api/token call.
+        if (response.silent_refresh_threshold_seconds !== undefined) {
+            localStorage.setItem(
+                "silent_refresh_threshold_seconds",
+                response.silent_refresh_threshold_seconds.toString()
+            );
+        }
     },
 
     /**
@@ -112,7 +139,8 @@ export const TokenService = {
             "refresh_expires_in",
             "session_state",
             "scope",
-            "not_before_policy"
+            "not_before_policy",
+            "silent_refresh_threshold_seconds"
         ];
         tokenKeys.forEach((key) => localStorage.removeItem(key));
     },
@@ -163,13 +191,13 @@ export const TokenService = {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                
+
                 if (response.status === 401 || errorData.error === "refresh_token_expired") {
                     console.error("Refresh token expired or invalid. Clearing session.");
                     this.clearTokens();
                     return null;
                 }
-                
+
                 console.error("Token refresh failed with status:", response.status);
                 return null;
             }
@@ -179,7 +207,7 @@ export const TokenService = {
 
             const newToken = tokenData.access_token;
             console.log("Tokens refreshed successfully.");
-            
+
             onRefreshed(newToken);
             return newToken;
         } catch (error) {
@@ -219,7 +247,7 @@ export const TokenService = {
         if (!accessToken) return;
 
         console.log("New access token detected in response headers. Syncing localStorage...");
-        
+
         const data: Record<string, any> = {
             access_token: accessToken,
             refresh_token: headers.get("X-Refresh-Token"),
@@ -228,7 +256,8 @@ export const TokenService = {
             refresh_expires_in: headers.get("X-Refresh-Expires-In"),
             session_state: headers.get("X-Session-State"),
             scope: headers.get("X-Scope"),
-            not_before_policy: headers.get("X-Not-Before-Policy")
+            not_before_policy: headers.get("X-Not-Before-Policy"),
+            silent_refresh_threshold_seconds: headers.get("X-Silent-Refresh-Threshold-Seconds")
         };
 
         this.saveTokenResponse(data);
