@@ -234,6 +234,184 @@ namespace S365.Search.Admin.UI.Services
             putResponse.EnsureSuccessStatusCode();
         }
 
+        public async Task<string> CreateOrganizationAsync(string adminToken, string name, string address, string contactPerson, string contactPhone)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/organizations";
+
+            var orgPayload = new
+            {
+                name = name,
+                enabled = true,
+                attributes = new Dictionary<string, string[]>
+                {
+                    { "address", new[] { address } },
+                    { "contactPerson", new[] { contactPerson } },
+                    { "contactPhone", new[] { contactPhone } }
+                }
+            };
+
+            var content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(orgPayload),
+                Encoding.UTF8,
+                "application/json");
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.PostAsync(url, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to create organization: {Status} {Error}", response.StatusCode, error);
+                throw new Exception($"Failed to create organization: {response.StatusCode} - {error}");
+            }
+
+            var locationHeader = response.Headers.Location?.ToString();
+            if (string.IsNullOrEmpty(locationHeader))
+                throw new Exception("Keycloak did not return a Location header for the created organization.");
+
+            var orgId = locationHeader.Split('/').Last();
+            return orgId;
+        }
+
+        public async Task<string> CreateUserAsync(string adminToken, string email, string password, string firstName, string orgName)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/users";
+
+            var userPayload = new
+            {
+                username = email,
+                email = email,
+                firstName = firstName,
+                enabled = true,
+                credentials = new[]
+                {
+                    new { type = "password", value = password, temporary = false }
+                },
+                attributes = new Dictionary<string, string[]>
+                {
+                    { "active_tenant", new[] { orgName } },
+                    { "tenants", new[] { orgName } }
+                }
+            };
+
+            var content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(userPayload),
+                Encoding.UTF8,
+                "application/json");
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.PostAsync(url, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to create user: {Status} {Error}", response.StatusCode, error);
+                throw new Exception($"Failed to create user: {response.StatusCode} - {error}");
+            }
+
+            var locationHeader = response.Headers.Location?.ToString();
+            if (string.IsNullOrEmpty(locationHeader))
+                throw new Exception("Keycloak did not return a Location header for the created user.");
+
+            var userId = locationHeader.Split('/').Last();
+            return userId;
+        }
+
+        public async Task AddUserToOrganizationAsync(string adminToken, string orgId, string userId)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/organizations/{orgId}/members";
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var content = new StringContent(userId, Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync(url, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to add user {UserId} to organization {OrgId}: {Status} {Error}", userId, orgId, response.StatusCode, error);
+                throw new Exception($"Failed to add user to organization: {response.StatusCode} - {error}");
+            }
+        }
+
+        public async Task DeleteOrganizationAsync(string adminToken, string orgId)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/organizations/{orgId}";
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.DeleteAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("Rollback: Failed to delete organization {OrgId}: {Status} {Error}", orgId, response.StatusCode, error);
+            }
+        }
+
+        public async Task DeleteUserAsync(string adminToken, string userId)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/users/{userId}";
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.DeleteAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogWarning("Rollback: Failed to delete user {UserId}: {Status} {Error}", userId, response.StatusCode, error);
+            }
+        }
+
+        public async Task<List<string>> GetUserOrganizationsAsync(string adminToken, string userId)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/organizations?memberUserId={userId}";
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var orgs = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(json)
+                ?? new List<Dictionary<string, object>>();
+
+            return orgs
+                .Where(o => o.TryGetValue("name", out var name) && name != null)
+                .Select(o => o["name"].ToString()!)
+                .ToList();
+        }
+
         public async Task<SwitchContextResponse> SwitchContextAsync(SwitchContextRequest request)
         {
             EnsureEnabled();

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -30,6 +31,7 @@ namespace S365.Search.Admin.UI.Controllers
         private readonly IUserContextResolver _userContextResolver;
         private readonly ITenantContextService _tenantContextService;
         private readonly ITokenRefreshService _tokenRefreshService;
+        private readonly KeycloakService _keycloakService;
         private readonly ILogger<OperationProxyController> _logger;
         private readonly bool _keycloakEnabled;
         private readonly string _activeTenantWhenKeycloakDisabled;
@@ -41,6 +43,7 @@ namespace S365.Search.Admin.UI.Controllers
             IUserContextResolver userContextResolver,
             ITenantContextService tenantContextService,
             ITokenRefreshService tokenRefreshService,
+            KeycloakService keycloakService,
             IConfiguration configuration,
             ILogger<OperationProxyController> logger)
         {
@@ -50,6 +53,7 @@ namespace S365.Search.Admin.UI.Controllers
             _userContextResolver = userContextResolver;
             _tenantContextService = tenantContextService;
             _tokenRefreshService = tokenRefreshService;
+            _keycloakService = keycloakService;
             _keycloakEnabled = configuration.GetValue<bool>("KeycloakAuthentication:IsEnabled");
             _activeTenantWhenKeycloakDisabled = configuration.GetValue<string>("KeycloakAuthentication:ActiveTenantWhenDisabled") ?? "OSP_DEV";
             _logger = logger;
@@ -220,7 +224,7 @@ namespace S365.Search.Admin.UI.Controllers
             return await ProxyDelete(fullEndpoint);
         }
 
-        [SwaggerOperation(Summary = "Get current user details", 
+        [SwaggerOperation(Summary = "Get current user details",
             Description = "Retrieves detailed information about the authenticated user including email, name, roles, and group assignments from Keycloak or JWT tokens.")]
         [HttpGet("account/getuserdetails")]
         [AllowAnonymous]
@@ -229,11 +233,74 @@ namespace S365.Search.Admin.UI.Controllers
             try
             {
                 var authenticatedUser = await _userContextResolver.ResolveAsync(HttpContext, User);
+
+                // Enrich tenants list from Keycloak Admin API
+                if (_keycloakEnabled && authenticatedUser.IsAuthenticated)
+                {
+                    try
+                    {
+                        var userId = ExtractUserIdFromContext();
+                        if (!string.IsNullOrEmpty(userId))
+                        {
+                            var adminToken = await _keycloakService.GetAdminTokenAsync();
+                            var orgNames = await _keycloakService.GetUserOrganizationsAsync(adminToken, userId);
+                            if (orgNames.Count > 0)
+                            {
+                                authenticatedUser.Tenants = orgNames;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to fetch user organizations from Keycloak. Falling back to JWT-based tenants.");
+                    }
+                }
+
                 return Ok(authenticatedUser);
             }
             catch (Exception ex)
             {
                 return CreateInternalServerError(ex, "GetUserDetails");
+            }
+        }
+
+        private string? ExtractUserIdFromContext()
+        {
+            // Try to get 'sub' claim from the authenticated user
+            var sub = User?.FindFirst("sub")?.Value
+                ?? User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (!string.IsNullOrEmpty(sub)) return sub;
+
+            // Fallback: extract from Bearer token
+            var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+            if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                var token = authHeader.Substring("Bearer ".Length).Trim();
+                return ExtractSubFromJwt(token);
+            }
+
+            // Fallback: extract from stored access token
+            var accessToken = HttpContext.GetTokenAsync("access_token").GetAwaiter().GetResult();
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                return ExtractSubFromJwt(accessToken);
+            }
+
+            return null;
+        }
+
+        private static string? ExtractSubFromJwt(string jwt)
+        {
+            try
+            {
+                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var token = handler.ReadJwtToken(jwt);
+                return token.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+            }
+            catch
+            {
+                return null;
             }
         }
 
