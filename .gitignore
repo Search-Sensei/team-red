@@ -49,8 +49,12 @@ yarn-error.log*
 
 # OS
 .DS_Store
+__MACOSX/
 Thumbs.db
 desktop.ini
+
+# Local developer config
+global.json
 
 # IDE
 .idea/

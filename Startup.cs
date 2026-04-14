@@ -205,6 +205,16 @@ namespace S365.Search.Admin.UI
 
             // Add Authentication and Authorization middleware
             app.UseAuthentication();
+
+            // Validate JWT Bearer tokens on every protected request.
+            // Runs after UseAuthentication so cookie sessions are already resolved,
+            // and before UseAuthorization so User is populated for policy evaluation.
+            var keycloakEnabled = Configuration.GetValue<bool>("KeycloakAuthentication:IsEnabled");
+            if (keycloakEnabled)
+            {
+                app.UseMiddleware<Middleware.JwtValidationMiddleware>();
+            }
+
             app.UseAuthorization();
 
             // OWASP REQUEST-932-APPLICATION-ATTACK-RCE (rules 932115, 932150): reject requests containing RCE-like patterns

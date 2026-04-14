@@ -125,7 +125,7 @@ namespace S365.Search.Admin.UI.Controllers
         [HttpGet("customerBilling/{*path}")]
         [HttpGet("settings/{*path}")]
         [HttpGet("controlPanel/{*path}")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<IActionResult> ProxyApiGet(string? path = null)
         {
             LogProxyRequestContext("GET", path);
@@ -152,7 +152,7 @@ namespace S365.Search.Admin.UI.Controllers
         [HttpPost("queryrules/{*path}")]
         [HttpPost("controlPanel/{*path}")]
         [HttpPost("navigations/{*path}")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<IActionResult> PostProxy(string? path = null, [FromBody] object? data = null)
         {
             LogProxyRequestContext("POST", path);
@@ -183,7 +183,7 @@ namespace S365.Search.Admin.UI.Controllers
         [HttpPut("customerBilling/{*path}")]
         [HttpPut("settings/{*path}")]
         [HttpPut("queryrules/{*path}")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<IActionResult> PutProxy(string? path = null, [FromBody] object? data = null)
         {
             LogProxyRequestContext("PUT", path);
@@ -211,7 +211,7 @@ namespace S365.Search.Admin.UI.Controllers
         [HttpDelete("customerBilling/{*path}")]
         [HttpDelete("settings/{*path}")]
         [HttpDelete("queryrules/{*path}")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<IActionResult> DeleteProxy(string? path = null)
         {
             LogProxyRequestContext("DELETE", path);

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System.Security.Claims;
 using System;
@@ -39,6 +40,17 @@ namespace S365.Search.Admin.UI.Extensions
 
                 return services;
             }
+
+            // Register the OIDC configuration manager used by JwtValidationMiddleware.
+            // ConfigurationManager caches the JWKS from the discovery endpoint and
+            // automatically re-fetches when RequestRefresh() is called (key rotation support).
+            var metadataAddress = keycloakConfig["MetadataAddress"];
+            var requireHttps = keycloakConfig.GetValue<bool>("RequireHttpsMetadata");
+            services.AddSingleton<IConfigurationManager<OpenIdConnectConfiguration>>(
+                new ConfigurationManager<OpenIdConnectConfiguration>(
+                    metadataAddress,
+                    new OpenIdConnectConfigurationRetriever(),
+                    new HttpDocumentRetriever { RequireHttps = requireHttps }));
 
             services.AddAuthentication(options =>
             {
