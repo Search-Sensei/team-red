@@ -397,7 +397,7 @@ namespace S365.Search.Admin.UI.Services
             if (string.IsNullOrWhiteSpace(realm))
                 throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
 
-            var url = $"/admin/realms/{realm}/organizations?memberUserId={userId}";
+            var url = $"/admin/realms/{realm}/organizations/members/{userId}/organizations";
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
             var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
