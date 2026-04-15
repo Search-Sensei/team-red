@@ -151,7 +151,7 @@ namespace S365.Search.Admin.UI.Services
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"RefreshTokenAsync: Failed to refresh token - Status: {response.StatusCode}, Error: {errorContent}");
+                _logger.LogError("RefreshTokenAsync: Failed to refresh token - Status: {Status}, Error: {Error}", response.StatusCode, errorContent);
                 response.EnsureSuccessStatusCode();
             }
 

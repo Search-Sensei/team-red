@@ -63,7 +63,6 @@ namespace S365.Search.Admin.UI.Extensions
                 options.Scope.Add("profile");
                 options.Scope.Add("email");
                 options.Scope.Add("organization");
-                options.Scope.Add("offline_access");
                 options.SaveTokens = keycloakConfig.GetValue<bool>("SaveTokens");
                 options.CallbackPath = keycloakConfig["CallbackPath"] ?? "/signin-oidc";
                 options.SignedOutCallbackPath = "/signout-callback-oidc";
