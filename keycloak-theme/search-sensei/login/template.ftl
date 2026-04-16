@@ -1,4 +1,4 @@
-<#macro registrationLayout>
+<#macro registrationLayout displayMessage=true displayInfo=false displayRequiredFields=false bodyClass="" socialProvidersPresent=false>
 <!DOCTYPE html>
 <html lang="${(locale.currentLanguageTag)!'en'}">
 <head>

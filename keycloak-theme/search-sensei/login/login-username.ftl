@@ -8,7 +8,7 @@
 
     <#if message?has_content && message.summary?has_content>
         <div class="ss-alert ss-alert-${message.type!'error'}">
-            ${message.summary?html}
+            ${message.summary}
         </div>
     </#if>
 
@@ -20,7 +20,7 @@
                 id="username"
                 name="username"
                 type="email"
-                value="${(login.username)!''?html}"
+                value="${(login.username)!''}"
                 autocomplete="email"
                 autofocus
                 required
