@@ -35,9 +35,9 @@ secrets.json
 .env
 .env.*
 
-# Local Docker setup (contains passwords)
-docker-compose.yml
-docker-compose.*.yml
+# Local Docker setup (contains passwords) — use docker-compose.local.yml for personal overrides
+docker-compose.local.yml
+docker-compose.local.*.yml
 
 # Node / React
 ClientApp/node_modules/

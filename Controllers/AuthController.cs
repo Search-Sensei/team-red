@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using S365.Search.Admin.UI.Services;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Linq;
@@ -18,12 +17,10 @@ namespace S365.Search.Admin.UI.Controllers
     public class AuthController : Controller
     {
         private readonly bool _keycloakEnabled;
-        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IConfiguration configuration, ILogger<AuthController> logger)
+        public AuthController(IConfiguration configuration)
         {
             _keycloakEnabled = configuration.GetValue<bool>("KeycloakAuthentication:IsEnabled");
-            _logger = logger;
         }
 
         [SwaggerOperation(Summary = "Account login with email prefill", 
@@ -151,10 +148,6 @@ namespace S365.Search.Admin.UI.Controllers
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return SignOut(properties, OpenIdConnectDefaults.AuthenticationScheme);
         }
-
-        // Error route removed - using standard error handling
-
-
 
         [SwaggerOperation(Summary = "Get current authenticated user",
             Description = "Retrieves information about the currently authenticated user including name, email, organization, and roles.")]
