@@ -102,6 +102,13 @@ const LeftMenu: React.FC = () => {
                     </Link>
                 </li>
 
+                <li className="nav-item">
+                    <Link className="nav-link" to="/users">
+                        <i className="fas fa-fw fa-users"></i>
+                        <span>Users</span>
+                    </Link>
+                </li>
+
                 <hr className="sidebar-divider" />
 
                 {showAdminSidebar?.featuredContent?.isEnabled == true && (

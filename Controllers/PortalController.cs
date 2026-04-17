@@ -21,6 +21,76 @@ namespace S365.Search.Admin.UI.Controllers
             _logger = logger;
         }
 
+        [HttpPost("invite")]
+        [Authorize]
+        public async Task<IActionResult> InviteUser([FromBody] InviteUserRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var orgName = User.FindFirst("organization")?.Value
+                ?? User.FindFirst("org_id")?.Value
+                ?? User.FindFirst("active_tenant")?.Value;
+
+            if (string.IsNullOrWhiteSpace(orgName))
+                return BadRequest(new { error = "Unable to determine your organisation. Please ensure you are logged in to an organisation." });
+
+            string adminToken;
+            try
+            {
+                adminToken = await _keycloakService.GetAdminTokenAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to obtain admin token during user invitation.");
+                return StatusCode(500, new { error = "Invitation service is temporarily unavailable." });
+            }
+
+            string? orgId;
+            try
+            {
+                orgId = await _keycloakService.GetOrganizationIdByNameAsync(adminToken, orgName);
+                if (orgId == null)
+                {
+                    _logger.LogWarning("Organisation '{OrgName}' not found in Keycloak.", orgName);
+                    return NotFound(new { error = $"Organisation '{orgName}' not found." });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to look up organisation '{OrgName}'.", orgName);
+                return StatusCode(500, new { error = "Failed to locate your organisation." });
+            }
+
+            try
+            {
+                await _keycloakService.InviteUserToOrganizationAsync(
+                    adminToken,
+                    orgId,
+                    request.Email.Trim(),
+                    request.FirstName.Trim(),
+                    request.LastName.Trim());
+            }
+            catch (Exception ex) when (ex.Message.Contains("409"))
+            {
+                return Conflict(new { field = "email", error = "A user with this email is already a member of the organisation." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to invite user '{Email}' to organisation '{OrgName}'.", request.Email, orgName);
+                return StatusCode(500, new { error = "Failed to send invitation. Please try again." });
+            }
+
+            _logger.LogInformation("User '{Email}' invited to organisation '{OrgName}'.", request.Email, orgName);
+
+            return Ok(new
+            {
+                message = $"Invitation sent successfully to {request.Email}.",
+                email = request.Email,
+                organisationName = orgName
+            });
+        }
+
         [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] OrganisationRegistrationRequest request)

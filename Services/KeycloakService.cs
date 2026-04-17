@@ -427,5 +427,56 @@ namespace S365.Search.Admin.UI.Services
 
             return await RefreshTokenAsync(request.RefreshToken);
         }
+
+        public async Task<string?> GetOrganizationIdByNameAsync(string adminToken, string orgName)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/organizations?search={Uri.EscapeDataString(orgName)}&exact=true";
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var orgs = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(json)
+                ?? new List<Dictionary<string, object>>();
+
+            var org = orgs.FirstOrDefault(o =>
+                o.TryGetValue("name", out var name) &&
+                string.Equals(name?.ToString(), orgName, StringComparison.OrdinalIgnoreCase));
+
+            return org != null && org.TryGetValue("id", out var id) ? id?.ToString() : null;
+        }
+
+        public async Task InviteUserToOrganizationAsync(string adminToken, string orgId, string email, string firstName, string lastName)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/organizations/{orgId}/members/invite-user";
+
+            var content = new FormUrlEncodedContent([
+                new("email", email),
+                new("firstName", firstName),
+                new("lastName", lastName)
+            ]);
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.PostAsync(url, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to invite user {Email} to organisation {OrgId}: {Status} {Error}", email, orgId, response.StatusCode, error);
+                throw new Exception($"Failed to invite user: {response.StatusCode} - {error}");
+            }
+        }
     }
 }

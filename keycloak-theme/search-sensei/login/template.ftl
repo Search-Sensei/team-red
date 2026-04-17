@@ -21,7 +21,7 @@
 
     <div class="ss-panel-right">
         <div class="ss-card">
-            <#nested>
+            <#nested "form">
         </div>
     </div>
 
