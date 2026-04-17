@@ -15,7 +15,15 @@
                     <a href="#" class="ss-org-item"
                        onclick="document.forms['kc-select-org-form']['kc.org'].value='${organization.alias}';document.forms['kc-select-org-form'].requestSubmit();return false;">
                         <div class="ss-org-icon">
-                            ${(organization.name!organization.alias)?substring(0, 1)?upper_case}
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="18" rx="1"/>
+                                <rect x="14" y="8" width="7" height="13" rx="1"/>
+                                <line x1="5.5" y1="7" x2="7.5" y2="7"/>
+                                <line x1="5.5" y1="10" x2="7.5" y2="10"/>
+                                <line x1="5.5" y1="13" x2="7.5" y2="13"/>
+                                <line x1="16.5" y1="12" x2="18.5" y2="12"/>
+                                <line x1="16.5" y1="15" x2="18.5" y2="15"/>
+                            </svg>
                         </div>
                         <div class="ss-org-info">
                             <span class="ss-org-name">${organization.name!}</span>

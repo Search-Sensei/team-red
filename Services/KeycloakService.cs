@@ -166,7 +166,8 @@ namespace S365.Search.Admin.UI.Services
                 TokenType = tokenData?["token_type"]?.ToString() ?? "Bearer",
                 NotBeforePolicy = int.TryParse(tokenData?["not-before-policy"]?.ToString(), out var nbp) ? nbp : 0,
                 SessionState = tokenData?["session_state"]?.ToString(),
-                Scope = tokenData?["scope"]?.ToString()
+                Scope = tokenData?["scope"]?.ToString(),
+                IdToken = tokenData?.ContainsKey("id_token") == true ? tokenData["id_token"]?.ToString() : null
             };
         }
 
