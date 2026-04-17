@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import logo from "../../assets/logo.png";
+import "./Register.css";
 
 interface FieldError {
     field: string;
@@ -84,149 +86,155 @@ const Register: React.FC = () => {
     };
 
     return (
-        <div id="content-wrapper">
-            <div className="container">
-                <div className="row justify-content-center">
-                    <div className="col-xl-8 col-lg-10 col-md-11">
-                        <div className="card o-hidden border-0 shadow-lg my-5">
-                            <div className="card-body p-0">
-                                <div className="p-5">
-                                    <div className="text-center mb-4">
-                                        <h1 className="h4 text-gray-900">Register Your Organisation</h1>
-                                        <p className="text-muted">Fill in the details below to create your organisation account.</p>
-                                    </div>
+        <div className="ss-page">
+            <div className="ss-panel-left">
+                <div className="ss-brand">
+                    <img src={logo} alt="Search Sensei" className="ss-logo" />
+                    <h1 className="ss-brand-name">Search Sensei</h1>
+                    <p className="ss-brand-tagline">Customer Portal</p>
+                </div>
+            </div>
 
-                                    {successMessage && (
-                                        <div className="alert alert-success" role="alert">
-                                            {successMessage}
-                                            <div className="mt-2">
-                                                <a href="/adminui/login" className="btn btn-sm btn-primary">Go to Login</a>
-                                            </div>
-                                        </div>
+            <div className="ss-panel-right">
+                <div className="ss-card">
+                    <div className="ss-card-header">
+                        <h2>Register Your Organisation</h2>
+                        <p>Fill in the details below to create your account.</p>
+                    </div>
+
+                    {successMessage && (
+                        <div className="ss-alert ss-alert-success">
+                            {successMessage}
+                            <div>
+                                <a href="/adminui/login" className="ss-btn-login">Go to Login</a>
+                            </div>
+                        </div>
+                    )}
+
+                    {errorMessage && (
+                        <div className="ss-alert ss-alert-error">{errorMessage}</div>
+                    )}
+
+                    {!successMessage && (
+                        <form onSubmit={handleSubmit} className="ss-form">
+                            <div className="ss-form-group">
+                                <label htmlFor="organisationName">Organisation Name</label>
+                                <input
+                                    type="text"
+                                    className={fieldErrors.organisationName ? "ss-input-error" : ""}
+                                    id="organisationName"
+                                    name="organisationName"
+                                    value={formData.organisationName}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="Your company name"
+                                />
+                                {fieldErrors.organisationName && (
+                                    <span className="ss-field-error">{fieldErrors.organisationName}</span>
+                                )}
+                            </div>
+
+                            <div className="ss-form-group">
+                                <label htmlFor="address">Address</label>
+                                <input
+                                    type="text"
+                                    className={fieldErrors.address ? "ss-input-error" : ""}
+                                    id="address"
+                                    name="address"
+                                    value={formData.address}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="123 Main St, City"
+                                />
+                                {fieldErrors.address && (
+                                    <span className="ss-field-error">{fieldErrors.address}</span>
+                                )}
+                            </div>
+
+                            <div className="ss-form-row">
+                                <div className="ss-form-group">
+                                    <label htmlFor="contactPerson">Contact Person</label>
+                                    <input
+                                        type="text"
+                                        className={fieldErrors.contactPerson ? "ss-input-error" : ""}
+                                        id="contactPerson"
+                                        name="contactPerson"
+                                        value={formData.contactPerson}
+                                        onChange={handleChange}
+                                        required
+                                        placeholder="Jane Doe"
+                                    />
+                                    {fieldErrors.contactPerson && (
+                                        <span className="ss-field-error">{fieldErrors.contactPerson}</span>
                                     )}
-
-                                    {errorMessage && (
-                                        <div className="alert alert-danger" role="alert">{errorMessage}</div>
-                                    )}
-
-                                    {!successMessage && (
-                                        <form onSubmit={handleSubmit}>
-                                            <div className="form-group">
-                                                <label htmlFor="organisationName">Organisation Name</label>
-                                                <input
-                                                    type="text"
-                                                    className={`form-control ${fieldErrors.organisationName ? "is-invalid" : ""}`}
-                                                    id="organisationName"
-                                                    name="organisationName"
-                                                    value={formData.organisationName}
-                                                    onChange={handleChange}
-                                                    required
-                                                />
-                                                {fieldErrors.organisationName && (
-                                                    <div className="invalid-feedback">{fieldErrors.organisationName}</div>
-                                                )}
-                                            </div>
-
-                                            <div className="form-group">
-                                                <label htmlFor="address">Address</label>
-                                                <input
-                                                    type="text"
-                                                    className={`form-control ${fieldErrors.address ? "is-invalid" : ""}`}
-                                                    id="address"
-                                                    name="address"
-                                                    value={formData.address}
-                                                    onChange={handleChange}
-                                                    required
-                                                />
-                                                {fieldErrors.address && (
-                                                    <div className="invalid-feedback">{fieldErrors.address}</div>
-                                                )}
-                                            </div>
-
-                                            <div className="form-row">
-                                                <div className="form-group col-md-6">
-                                                    <label htmlFor="contactPerson">Contact Person</label>
-                                                    <input
-                                                        type="text"
-                                                        className={`form-control ${fieldErrors.contactPerson ? "is-invalid" : ""}`}
-                                                        id="contactPerson"
-                                                        name="contactPerson"
-                                                        value={formData.contactPerson}
-                                                        onChange={handleChange}
-                                                        required
-                                                    />
-                                                    {fieldErrors.contactPerson && (
-                                                        <div className="invalid-feedback">{fieldErrors.contactPerson}</div>
-                                                    )}
-                                                </div>
-                                                <div className="form-group col-md-6">
-                                                    <label htmlFor="contactPhone">Contact Phone</label>
-                                                    <input
-                                                        type="tel"
-                                                        className={`form-control ${fieldErrors.contactPhone ? "is-invalid" : ""}`}
-                                                        id="contactPhone"
-                                                        name="contactPhone"
-                                                        value={formData.contactPhone}
-                                                        onChange={handleChange}
-                                                        required
-                                                    />
-                                                    {fieldErrors.contactPhone && (
-                                                        <div className="invalid-feedback">{fieldErrors.contactPhone}</div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="form-group">
-                                                <label htmlFor="email">Email</label>
-                                                <input
-                                                    type="email"
-                                                    className={`form-control ${fieldErrors.email ? "is-invalid" : ""}`}
-                                                    id="email"
-                                                    name="email"
-                                                    value={formData.email}
-                                                    onChange={handleChange}
-                                                    required
-                                                />
-                                                {fieldErrors.email && (
-                                                    <div className="invalid-feedback">{fieldErrors.email}</div>
-                                                )}
-                                            </div>
-
-                                            <div className="form-group">
-                                                <label htmlFor="password">Password</label>
-                                                <input
-                                                    type="password"
-                                                    className={`form-control ${fieldErrors.password ? "is-invalid" : ""}`}
-                                                    id="password"
-                                                    name="password"
-                                                    value={formData.password}
-                                                    onChange={handleChange}
-                                                    required
-                                                    minLength={8}
-                                                />
-                                                {fieldErrors.password && (
-                                                    <div className="invalid-feedback">{fieldErrors.password}</div>
-                                                )}
-                                                <small className="form-text text-muted">Must be at least 8 characters.</small>
-                                            </div>
-
-                                            <button
-                                                type="submit"
-                                                className="btn btn-primary btn-block"
-                                                disabled={isSubmitting}
-                                            >
-                                                {isSubmitting ? "Registering..." : "Register Organisation"}
-                                            </button>
-
-                                            <div className="text-center mt-3">
-                                                <a href="/adminui/login">Already have an account? Log in</a>
-                                            </div>
-                                        </form>
+                                </div>
+                                <div className="ss-form-group">
+                                    <label htmlFor="contactPhone">Contact Phone</label>
+                                    <input
+                                        type="tel"
+                                        className={fieldErrors.contactPhone ? "ss-input-error" : ""}
+                                        id="contactPhone"
+                                        name="contactPhone"
+                                        value={formData.contactPhone}
+                                        onChange={handleChange}
+                                        required
+                                        placeholder="+61 400 000 000"
+                                    />
+                                    {fieldErrors.contactPhone && (
+                                        <span className="ss-field-error">{fieldErrors.contactPhone}</span>
                                     )}
                                 </div>
                             </div>
-                        </div>
-                    </div>
+
+                            <div className="ss-form-group">
+                                <label htmlFor="email">Email</label>
+                                <input
+                                    type="email"
+                                    className={fieldErrors.email ? "ss-input-error" : ""}
+                                    id="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="you@example.com"
+                                />
+                                {fieldErrors.email && (
+                                    <span className="ss-field-error">{fieldErrors.email}</span>
+                                )}
+                            </div>
+
+                            <div className="ss-form-group">
+                                <label htmlFor="password">Password</label>
+                                <input
+                                    type="password"
+                                    className={fieldErrors.password ? "ss-input-error" : ""}
+                                    id="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                    minLength={8}
+                                    placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;"
+                                />
+                                {fieldErrors.password && (
+                                    <span className="ss-field-error">{fieldErrors.password}</span>
+                                )}
+                                <span className="ss-field-hint">Must be at least 8 characters.</span>
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="ss-btn-primary"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? "Registering..." : "Register Organisation"}
+                            </button>
+
+                            <div className="ss-form-footer">
+                                <a href="/adminui/login">Already have an account? Log in</a>
+                            </div>
+                        </form>
+                    )}
                 </div>
             </div>
         </div>

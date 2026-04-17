@@ -1,0 +1,275 @@
+/* =====================================================
+   Register Page – Matches Keycloak Search Sensei theme
+     Dark:    #0e1e24
+     Teal:    #00c6b6
+     Cream:   #faf5ec
+     Text:    darkslategray / #5a5c69
+   ===================================================== */
+
+.ss-page {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* Left branding panel */
+.ss-panel-left {
+    flex: 1;
+    background: linear-gradient(180deg, #0e1e24 10%, #00c6b6 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+/* Right form panel */
+.ss-panel-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(44, 44, 52, 0.05);
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+/* Brand (left panel) */
+.ss-brand {
+    text-align: center;
+    color: #ffffff;
+}
+
+.ss-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    margin-bottom: 1.5rem;
+    background: #ffffff;
+    padding: 12px;
+    border-radius: 50%;
+}
+
+.ss-brand-name {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.ss-brand-tagline {
+    font-size: 1rem;
+    opacity: 0.8;
+    font-weight: 300;
+}
+
+/* Card */
+.ss-card {
+    background-color: #faf5ec;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 480px;
+}
+
+.ss-card-header {
+    margin-bottom: 1.75rem;
+}
+
+.ss-card-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0e1e24;
+    margin-bottom: 0.25rem;
+}
+
+.ss-card-header p {
+    color: #5a5c69;
+    font-size: 0.9rem;
+}
+
+/* Alerts */
+.ss-alert {
+    padding: 0.75rem 1rem;
+    border-radius: 0.35rem;
+    font-size: 0.875rem;
+    margin-bottom: 1.25rem;
+}
+
+.ss-alert-error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.ss-alert-success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+/* Form */
+.ss-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.ss-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.ss-form-group label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #0e1e24;
+}
+
+.ss-form-group input[type="email"],
+.ss-form-group input[type="password"],
+.ss-form-group input[type="text"],
+.ss-form-group input[type="tel"] {
+    padding: 0.6rem 0.85rem;
+    font-size: 0.95rem;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0.35rem;
+    background-color: #ffffff;
+    color: darkslategray;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+    width: 100%;
+}
+
+.ss-form-group input:focus {
+    border-color: #00c6b6;
+    box-shadow: 0 0 0 0.2rem rgba(0, 198, 182, 0.25);
+}
+
+.ss-form-group input.ss-input-error {
+    border-color: #e74a3b;
+}
+
+.ss-field-error {
+    color: #e74a3b;
+    font-size: 0.8rem;
+}
+
+.ss-field-hint {
+    color: #5a5c69;
+    font-size: 0.8rem;
+}
+
+.ss-form-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.ss-form-row .ss-form-group {
+    flex: 1;
+}
+
+/* Primary button */
+.ss-btn-primary {
+    margin-top: 0.5rem;
+    padding: 0.65rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #0e1e24;
+    border: none;
+    border-radius: 0.35rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    letter-spacing: 0.01em;
+}
+
+.ss-btn-primary:hover,
+.ss-btn-primary:focus {
+    background-color: #00c6b6;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 198, 182, 0.35);
+}
+
+.ss-btn-primary:disabled {
+    background-color: #5a5c69;
+    cursor: not-allowed;
+}
+
+/* Success box login link */
+.ss-btn-login {
+    display: inline-block;
+    margin-top: 0.75rem;
+    padding: 0.4rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #0e1e24;
+    border-radius: 0.35rem;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+}
+
+.ss-btn-login:hover {
+    background-color: #00c6b6;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+/* Footer link */
+.ss-form-footer {
+    margin-top: 1.25rem;
+    text-align: center;
+    font-size: 0.875rem;
+}
+
+.ss-form-footer a {
+    color: cadetblue;
+    text-decoration: none;
+}
+
+.ss-form-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive: stack panels on small screens */
+@media (max-width: 768px) {
+    .ss-page {
+        flex-direction: column;
+        overflow: auto;
+    }
+
+    .ss-panel-left {
+        flex: none;
+        padding: 2rem 1rem;
+    }
+
+    .ss-logo {
+        width: 56px;
+        height: 56px;
+    }
+
+    .ss-brand-name {
+        font-size: 1.5rem;
+    }
+
+    .ss-panel-right {
+        flex: none;
+        padding: 2rem 1rem;
+    }
+
+    .ss-card {
+        box-shadow: none;
+        border: none;
+    }
+
+    .ss-form-row {
+        flex-direction: column;
+        gap: 1.1rem;
+    }
+}
