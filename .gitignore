@@ -35,6 +35,10 @@ secrets.json
 .env
 .env.*
 
+# Local Docker setup (contains passwords) — use docker-compose.local.yml for personal overrides
+docker-compose.local.yml
+docker-compose.local.*.yml
+
 # Node / React
 ClientApp/node_modules/
 ClientApp/build/
@@ -49,8 +53,12 @@ yarn-error.log*
 
 # OS
 .DS_Store
+__MACOSX/
 Thumbs.db
 desktop.ini
+
+# .NET global config
+global.json
 
 # IDE
 .idea/

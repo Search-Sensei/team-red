@@ -7,11 +7,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using S365.Search.Admin.UI.Services;
 using Swashbuckle.AspNetCore.Annotations;
-using System.Security.Claims;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace S365.Search.Admin.UI.Controllers
 {
@@ -150,9 +149,7 @@ namespace S365.Search.Admin.UI.Controllers
             return SignOut(properties, OpenIdConnectDefaults.AuthenticationScheme);
         }
 
-        // Error route removed - using standard error handling
-
-        [SwaggerOperation(Summary = "Get current authenticated user", 
+        [SwaggerOperation(Summary = "Get current authenticated user",
             Description = "Retrieves information about the currently authenticated user including name, email, organization, and roles.")]
         [HttpGet("api/auth/user")]
         [Authorize]
