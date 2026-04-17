@@ -8,7 +8,7 @@
 
     <#if message?has_content && message.summary?has_content>
         <div class="ss-alert ss-alert-${message.type!'error'}">
-            ${message.summary}
+            ${kcSanitize(message.summary)?no_esc}
         </div>
     </#if>
 

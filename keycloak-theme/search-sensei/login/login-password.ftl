@@ -4,13 +4,13 @@
     <div class="ss-card-header">
         <h2>Enter your password</h2>
         <#if login.username?has_content>
-            <p>${login.username}</p>
+            <p>${login.username?html}</p>
         </#if>
     </div>
 
     <#if message?has_content && message.summary?has_content>
         <div class="ss-alert ss-alert-${message.type!'error'}">
-            ${message.summary}
+            ${kcSanitize(message.summary)?no_esc}
         </div>
     </#if>
 
