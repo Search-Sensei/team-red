@@ -11,6 +11,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using S365.Search.Admin.UI.Models;
 using S365.Search.Admin.UI.Services;
 using System.Threading.Tasks;
 
@@ -127,6 +129,73 @@ namespace S365.Search.Admin.UI.Extensions
                                 identity.AddClaim(new Claim(ClaimTypes.Role, role));
                         }
 
+                        // Sync active_tenant with the organization selected during Keycloak login
+                        var orgClaimValue = context.Principal?.FindFirst("organization")?.Value;
+                        var activeTenantValue = context.Principal?.FindFirst("active_tenant")?.Value;
+                        if (!string.IsNullOrEmpty(orgClaimValue) && orgClaimValue != activeTenantValue)
+                        {
+                            try
+                            {
+                                var keycloakService = context.HttpContext.RequestServices.GetRequiredService<KeycloakService>();
+                                var adminToken = await keycloakService.GetAdminTokenAsync();
+                                var userId = context.Principal?.FindFirst("sub")?.Value
+                                    ?? context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                                if (!string.IsNullOrEmpty(userId))
+                                {
+                                    // 1. Update Keycloak user attribute
+                                    await keycloakService.UpdateActiveTenantAsync(adminToken, userId, orgClaimValue);
+
+                                    // 2. Refresh token to get new JWT with updated active_tenant
+                                    //    Store in HttpContext.Items — will be applied in OnTicketReceived
+                                    //    (cannot modify TokenEndpointResponse here due to at_hash validation)
+                                    var refreshToken = context.TokenEndpointResponse?.RefreshToken;
+                                    if (!string.IsNullOrEmpty(refreshToken))
+                                    {
+                                        var newTokens = await keycloakService.RefreshTokenAsync(refreshToken);
+                                        context.HttpContext.Items["__refreshedTokens"] = newTokens;
+                                    }
+
+                                    // 3. Update claims in current session
+                                    if (identity != null)
+                                    {
+                                        var existingClaim = identity.FindFirst("active_tenant");
+                                        if (existingClaim != null)
+                                            identity.RemoveClaim(existingClaim);
+                                        identity.AddClaim(new Claim("active_tenant", orgClaimValue));
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                var logger = context.HttpContext.RequestServices.GetService<ILoggerFactory>()?.CreateLogger("KeycloakAuth");
+                                logger?.LogWarning(ex, "Failed to sync active_tenant with organization on login.");
+                            }
+                        }
+                    },
+                    OnTicketReceived = async context =>
+                    {
+                        // Apply refreshed tokens AFTER the OIDC handler has saved its original tokens
+                        if (context.HttpContext.Items.TryGetValue("__refreshedTokens", out var tokensObj) &&
+                            tokensObj is SwitchContextResponse newTokens)
+                        {
+                            var storedTokens = context.Properties?.GetTokens()?.ToList()
+                                ?? new List<AuthenticationToken>();
+
+                            void ReplaceToken(string name, string? value)
+                            {
+                                if (value == null) return;
+                                var existing = storedTokens.FirstOrDefault(t => t.Name == name);
+                                if (existing != null) existing.Value = value;
+                                else storedTokens.Add(new AuthenticationToken { Name = name, Value = value });
+                            }
+
+                            ReplaceToken("access_token", newTokens.AccessToken);
+                            ReplaceToken("refresh_token", newTokens.RefreshToken);
+                            if (!string.IsNullOrEmpty(newTokens.IdToken))
+                                ReplaceToken("id_token", newTokens.IdToken);
+
+                            context.Properties?.StoreTokens(storedTokens);
+                        }
                         await Task.CompletedTask;
                     },
                     OnRedirectToIdentityProvider = async context =>

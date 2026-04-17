@@ -95,17 +95,19 @@ namespace S365.Search.Admin.UI.Services
             if (groupIds.Count == 0) groupIds = user?.FindAll("group_ids")?.Select(c => c.Value).ToList() ?? new List<string>();
             if (groupId == null) groupId = user?.FindFirst("active_tenant")?.Value ?? user?.FindFirst("tenant")?.Value ?? user?.FindFirst("organization")?.Value ?? user?.FindFirst("org_id")?.Value;
 
-            var tenants = user?.FindAll("tenants")?.Select(c => c.Value).Distinct().ToList() ?? new List<string>();
-            if (tenants.Count == 0 && user?.Identity?.IsAuthenticated == true)
+            var tenantNames = user?.FindAll("tenants")?.Select(c => c.Value).Distinct().ToList() ?? new List<string>();
+            if (tenantNames.Count == 0 && user?.Identity?.IsAuthenticated == true)
             {
                 var accessToken = await httpContext.GetTokenAsync("access_token");
                 var idToken = await httpContext.GetTokenAsync("id_token");
                 var fromToken = GetOrganizationsFromJwt(accessToken) ?? GetOrganizationsFromJwt(idToken);
                 if (fromToken != null && fromToken.Count > 0)
-                    tenants = fromToken;
+                    tenantNames = fromToken;
             }
-            if (tenants.Count == 0 && !string.IsNullOrEmpty(groupId))
-                tenants.Add(groupId);
+            if (tenantNames.Count == 0 && !string.IsNullOrEmpty(groupId))
+                tenantNames.Add(groupId);
+
+            var tenants = tenantNames.Select(t => new TenantInfo { Name = t, DisplayName = t }).ToList();
 
             return new AuthenticatedUserResponse
             {

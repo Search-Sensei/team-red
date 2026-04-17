@@ -235,7 +235,7 @@ namespace S365.Search.Admin.UI.Services
             putResponse.EnsureSuccessStatusCode();
         }
 
-        public async Task<string> CreateOrganizationAsync(string adminToken, string name, string address, string contactPerson, string contactPhone)
+        public async Task<string> CreateOrganizationAsync(string adminToken, string name, string displayName, string address, string contactPerson, string contactPhone)
         {
             EnsureEnabled();
 
@@ -251,6 +251,7 @@ namespace S365.Search.Admin.UI.Services
                 enabled = true,
                 attributes = new Dictionary<string, string[]>
                 {
+                    { "displayName", new[] { displayName } },
                     { "address", new[] { address } },
                     { "contactPerson", new[] { contactPerson } },
                     { "contactPhone", new[] { contactPhone } }
@@ -390,7 +391,7 @@ namespace S365.Search.Admin.UI.Services
             }
         }
 
-        public async Task<List<string>> GetUserOrganizationsAsync(string adminToken, string userId)
+        public async Task<List<TenantInfo>> GetUserOrganizationsAsync(string adminToken, string userId)
         {
             EnsureEnabled();
 
@@ -404,13 +405,68 @@ namespace S365.Search.Admin.UI.Services
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
-            var orgs = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(json)
-                ?? new List<Dictionary<string, object>>();
+            using var doc = JsonDocument.Parse(json);
+            var result = new List<TenantInfo>();
 
-            return orgs
-                .Where(o => o.TryGetValue("name", out var name) && name != null)
-                .Select(o => o["name"].ToString()!)
-                .ToList();
+            foreach (var org in doc.RootElement.EnumerateArray())
+            {
+                if (!org.TryGetProperty("name", out var nameProp))
+                    continue;
+
+                var name = nameProp.GetString();
+                if (string.IsNullOrEmpty(name))
+                    continue;
+
+                var displayName = TryGetDisplayName(org);
+
+                // Fallback: if list endpoint didn't include attributes (Keycloak <26.0.7),
+                // fetch individual org details
+                if (displayName == null && org.TryGetProperty("id", out var idProp))
+                {
+                    var orgId = idProp.GetString();
+                    if (!string.IsNullOrEmpty(orgId))
+                    {
+                        displayName = await GetOrgDisplayNameAsync(adminToken, realm, orgId);
+                    }
+                }
+
+                result.Add(new TenantInfo { Name = name, DisplayName = displayName ?? name });
+            }
+
+            return result;
+        }
+
+        private static string? TryGetDisplayName(JsonElement org)
+        {
+            if (org.TryGetProperty("attributes", out var attrs) &&
+                attrs.TryGetProperty("displayName", out var dnProp) &&
+                dnProp.ValueKind == JsonValueKind.Array &&
+                dnProp.GetArrayLength() > 0)
+            {
+                return dnProp[0].GetString();
+            }
+            return null;
+        }
+
+        private async Task<string?> GetOrgDisplayNameAsync(string adminToken, string realm, string orgId)
+        {
+            try
+            {
+                var url = $"/admin/realms/{realm}/organizations/{orgId}";
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+                var response = await _httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                return TryGetDisplayName(doc.RootElement);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to fetch display name for org {OrgId}", orgId);
+                return null;
+            }
         }
 
         public async Task<SwitchContextResponse> SwitchContextAsync(SwitchContextRequest request)

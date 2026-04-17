@@ -178,7 +178,7 @@ const Login: React.FC = () => {
             groups: groupsStr,
             fullGroups: fullGroupsArr,
             groupIds: groupIdsArr,
-            tenants: authenticatedUser.tenants ?? (authenticatedUser.groupId ? [authenticatedUser.groupId] : []),
+            tenants: authenticatedUser.tenants ?? (authenticatedUser.groupId ? [{ name: authenticatedUser.groupId, displayName: authenticatedUser.groupId }] : []),
             currentTenant: authenticatedUser.currentTenant ?? authenticatedUser.groupId
         };
         var canLogin = true;

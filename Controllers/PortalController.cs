@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using S365.Search.Admin.UI.Models;
 using S365.Search.Admin.UI.Services;
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace S365.Search.Admin.UI.Controllers
@@ -109,6 +110,9 @@ namespace S365.Search.Admin.UI.Controllers
                 return StatusCode(500, new { error = "Registration service is temporarily unavailable." });
             }
 
+            var displayName = request.OrganisationName.Trim();
+            var internalName = Regex.Replace(displayName, @"\s+", "-");
+
             string orgId = null;
             string userId = null;
 
@@ -119,7 +123,8 @@ namespace S365.Search.Admin.UI.Controllers
                 {
                     orgId = await _keycloakService.CreateOrganizationAsync(
                         adminToken,
-                        request.OrganisationName.Trim(),
+                        internalName,
+                        displayName,
                         request.Address.Trim(),
                         request.ContactPerson.Trim(),
                         request.ContactPhone.Trim());
@@ -137,7 +142,7 @@ namespace S365.Search.Admin.UI.Controllers
                         request.Email.Trim(),
                         request.Password,
                         request.ContactPerson.Trim(),
-                        request.OrganisationName.Trim());
+                        internalName);
                 }
                 catch (Exception ex) when (ex.Message.Contains("Conflict"))
                 {
