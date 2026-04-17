@@ -4,11 +4,11 @@
 
         <div id="register-success" style="display:none">
             <div class="ss-card-header">
-                <h2>You're all set!</h2>
-                <p>Your account has been created successfully.</p>
+                <h2>Registration Successful!</h2>
+                <p>Your account has been created.</p>
             </div>
             <div class="ss-alert ss-alert-success">
-                You can now close this tab and sign in through the Search Sensei portal.
+                Please go to the Search Sensei Customer Login Page to sign in.
             </div>
         </div>
 
@@ -68,7 +68,8 @@
                         value="${(register.formData.email)!''}"
                         autocomplete="email"
                         required
-                        placeholder="you@example.com"
+                        readonly
+                        style="background-color:#f0f0f0;cursor:not-allowed;"
                     />
                     <#if messagesPerField.existsError('email')>
                         <span class="ss-field-error">${kcSanitize(messagesPerField.get('email'))?no_esc}</span>

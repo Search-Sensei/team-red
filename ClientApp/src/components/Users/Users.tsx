@@ -3,6 +3,7 @@ import TopCard from "../../common/components/TopCard";
 import { IUser } from "../../store/models/user.interface";
 import { useDispatch, useSelector } from "react-redux";
 import { IStateType } from "../../store/models/root.interface";
+import { IAccount } from "../../store/models/account.interface";
 //import { addAdmin, removeAdmin } from "../../store/actions/users.action";
 import { updateCurrentPath } from "../../store/actions/root.actions";
 import InviteUserModal from "./InviteUserModal";
@@ -11,6 +12,10 @@ const Users: React.FC = () => {
 
     const dispatch: Dispatch<any> = useDispatch();
     dispatch(updateCurrentPath("user", "list"));
+
+    const account: IAccount = useSelector((state: IStateType) => state.account);
+    const canManageUsers = !account.isAuthenticationEnabled
+        || account.fullGroups.includes("org-admin");
 
     const [showInviteModal, setShowInviteModal] = useState(false);
 
@@ -101,9 +106,11 @@ const Users: React.FC = () => {
                         <div className="card-header py-3">
                             <h6 className="m-0 font-weight-bold">User List</h6>
                             <div className="header-buttons">
-                                <button className="btn btn-primary btn-sm" onClick={() => setShowInviteModal(true)}>
-                                    <i className="fas fa-envelope mr-1"></i> Invite User
-                                </button>
+                                {canManageUsers && (
+                                    <button className="btn btn-primary btn-sm" onClick={() => setShowInviteModal(true)}>
+                                        <i className="fas fa-envelope mr-1"></i> Invite User
+                                    </button>
+                                )}
                             </div>
                         </div>
                         <div className="card-body">

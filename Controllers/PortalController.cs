@@ -22,7 +22,7 @@ namespace S365.Search.Admin.UI.Controllers
         }
 
         [HttpPost("invite")]
-        [Authorize]
+        [Authorize(Roles = "org-admin,admin")]
         public async Task<IActionResult> InviteUser([FromBody] InviteUserRequest request)
         {
             if (!ModelState.IsValid)
@@ -73,7 +73,7 @@ namespace S365.Search.Admin.UI.Controllers
             }
             catch (Exception ex) when (ex.Message.Contains("409"))
             {
-                return Conflict(new { field = "email", error = "A user with this email is already a member of the organisation." });
+                return Conflict(new { field = "email", error = $"{request.Email} is already a member of the organisation." });
             }
             catch (Exception ex)
             {
