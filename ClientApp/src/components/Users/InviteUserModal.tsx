@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
+import fetcher from "../Fetcher";
 
 interface IProps {
     show: boolean;
@@ -50,7 +51,7 @@ const InviteUserModal: React.FC<IProps> = ({ show, onHide }) => {
         setFieldErrors({});
 
         try {
-            const response = await fetch("/portal/api/invite", {
+            const response = await fetcher("/portal/api/invite", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),

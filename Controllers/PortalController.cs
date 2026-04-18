@@ -71,7 +71,7 @@ namespace S365.Search.Admin.UI.Controllers
                     request.FirstName.Trim(),
                     request.LastName.Trim());
             }
-            catch (Exception ex) when (ex.Message.Contains("409"))
+            catch (KeycloakConflictException)
             {
                 return Conflict(new { field = "email", error = $"{request.Email} is already a member of the organisation." });
             }

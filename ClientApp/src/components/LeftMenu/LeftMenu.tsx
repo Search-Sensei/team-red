@@ -47,7 +47,8 @@ const LeftMenu: React.FC = () => {
     );
     const account: IAccount = useSelector((state: IStateType) => state.account);
     const canManageUsers = !account.isAuthenticationEnabled
-        || account.fullGroups.includes("org-admin");
+        || account.fullGroups.includes("org-admin")
+        || account.fullGroups.includes("admin");
 
     let [leftMenuVisibility, setLeftMenuVisibility] = useState(false);
 

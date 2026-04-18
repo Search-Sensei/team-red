@@ -215,7 +215,7 @@ namespace S365.Search.Admin.UI.Services
                         }
                     }
                 }
-                if (root.TryGetProperty("realm_access", out var realm) && realm.TryGetProperty("roles", out var realmRoles) && realmRoles.ValueKind == JsonValueKind.Array)
+                if (roles.Count == 0 && root.TryGetProperty("realm_access", out var realm) && realm.TryGetProperty("roles", out var realmRoles) && realmRoles.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var role in realmRoles.EnumerateArray())
                         if (role.ValueKind == JsonValueKind.String) roles.Add(role.GetString() ?? "");

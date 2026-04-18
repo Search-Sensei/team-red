@@ -475,6 +475,8 @@ namespace S365.Search.Admin.UI.Services
             {
                 var error = await response.Content.ReadAsStringAsync();
                 _logger.LogError("Failed to invite user {Email} to organisation {OrgId}: {Status} {Error}", email, orgId, response.StatusCode, error);
+                if ((int)response.StatusCode == 409)
+                    throw new KeycloakConflictException($"User {email} is already a member of the organisation.");
                 throw new Exception($"Failed to invite user: {(int)response.StatusCode} - {error}");
             }
         }
