@@ -10,7 +10,7 @@ interface FieldError {
 const Register: React.FC = () => {
     const [formData, setFormData] = useState({
         organisationName: "",
-        address: "",
+        organisationUrl: "",
         contactPerson: "",
         contactPhone: "",
         email: "",
@@ -20,6 +20,13 @@ const Register: React.FC = () => {
     const [successMessage, setSuccessMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+    const handleUrlBlur = () => {
+        const url = formData.organisationUrl.trim();
+        if (url && !/^https?:\/\//i.test(url)) {
+            setFormData((prev) => ({ ...prev, organisationUrl: `https://${url}` }));
+        }
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -52,7 +59,7 @@ const Register: React.FC = () => {
                 setSuccessMessage("Organisation registered successfully! You can now log in.");
                 setFormData({
                     organisationName: "",
-                    address: "",
+                    organisationUrl: "",
                     contactPerson: "",
                     contactPhone: "",
                     email: "",
@@ -135,20 +142,22 @@ const Register: React.FC = () => {
                             </div>
 
                             <div className="ss-form-group">
-                                <label htmlFor="address">Address</label>
+                                <label htmlFor="organisationUrl">Organisation URL</label>
                                 <input
-                                    type="text"
-                                    className={fieldErrors.address ? "ss-input-error" : ""}
-                                    id="address"
-                                    name="address"
-                                    value={formData.address}
+                                    type="url"
+                                    className={fieldErrors.organisationUrl ? "ss-input-error" : ""}
+                                    id="organisationUrl"
+                                    name="organisationUrl"
+                                    value={formData.organisationUrl}
                                     onChange={handleChange}
+                                    onBlur={handleUrlBlur}
                                     required
-                                    placeholder="123 Main St, City"
+                                    placeholder="www.yourcompany.com"
                                 />
-                                {fieldErrors.address && (
-                                    <span className="ss-field-error">{fieldErrors.address}</span>
+                                {fieldErrors.organisationUrl && (
+                                    <span className="ss-field-error">{fieldErrors.organisationUrl}</span>
                                 )}
+                                <span className="ss-field-hint">Your organisation's website address.</span>
                             </div>
 
                             <div className="ss-form-row">

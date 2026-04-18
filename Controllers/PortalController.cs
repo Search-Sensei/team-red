@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using S365.Search.Admin.UI.Models;
 using S365.Search.Admin.UI.Services;
 using System;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -17,12 +18,14 @@ namespace S365.Search.Admin.UI.Controllers
         private readonly KeycloakService _keycloakService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<PortalController> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public PortalController(KeycloakService keycloakService, IConfiguration configuration, ILogger<PortalController> logger)
+        public PortalController(KeycloakService keycloakService, IConfiguration configuration, ILogger<PortalController> logger, IHttpClientFactory httpClientFactory)
         {
             _keycloakService = keycloakService;
             _configuration = configuration;
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
 
         [HttpPost("invite")]
@@ -102,6 +105,37 @@ namespace S365.Search.Admin.UI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Validate that the organisation URL is reachable
+            try
+            {
+                var urlClient = _httpClientFactory.CreateClient("UrlValidation");
+                urlClient.Timeout = TimeSpan.FromSeconds(5);
+                var urlRequest = new HttpRequestMessage(HttpMethod.Head, request.OrganisationUrl.Trim());
+                urlRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (compatible; RegistrationValidator/1.0)");
+                var urlResponse = await urlClient.SendAsync(urlRequest);
+
+                // Some servers block HEAD, fall back to GET
+                if (urlResponse.StatusCode == System.Net.HttpStatusCode.MethodNotAllowed ||
+                    urlResponse.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    urlRequest = new HttpRequestMessage(HttpMethod.Get, request.OrganisationUrl.Trim());
+                    urlRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (compatible; RegistrationValidator/1.0)");
+                    urlResponse = await urlClient.SendAsync(urlRequest);
+                }
+
+                // Accept 2xx and 3xx (redirects) as valid
+                var statusCode = (int)urlResponse.StatusCode;
+                if (statusCode >= 400)
+                {
+                    return BadRequest(new { errors = new { organisationUrl = new[] { "Invalid URL. Please provide a valid and accessible website address." } } });
+                }
+            }
+            catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException)
+            {
+                _logger.LogWarning(ex, "Organisation URL validation failed for {Url}", request.OrganisationUrl);
+                return BadRequest(new { errors = new { organisationUrl = new[] { "Invalid URL. Please provide a valid and accessible website address." } } });
+            }
+
             string adminToken;
             try
             {
@@ -128,9 +162,9 @@ namespace S365.Search.Admin.UI.Controllers
                         adminToken,
                         internalName,
                         displayName,
-                        request.Address.Trim(),
                         request.ContactPerson.Trim(),
-                        request.ContactPhone.Trim());
+                        request.ContactPhone.Trim(),
+                        request.OrganisationUrl.Trim());
                 }
                 catch (Exception ex) when (ex.Message.Contains("Conflict"))
                 {

@@ -235,7 +235,7 @@ namespace S365.Search.Admin.UI.Services
             putResponse.EnsureSuccessStatusCode();
         }
 
-        public async Task<string> CreateOrganizationAsync(string adminToken, string name, string displayName, string address, string contactPerson, string contactPhone)
+        public async Task<string> CreateOrganizationAsync(string adminToken, string name, string displayName, string contactPerson, string contactPhone, string organisationUrl)
         {
             EnsureEnabled();
 
@@ -252,9 +252,9 @@ namespace S365.Search.Admin.UI.Services
                 attributes = new Dictionary<string, string[]>
                 {
                     { "displayName", new[] { displayName } },
-                    { "address", new[] { address } },
                     { "contactPerson", new[] { contactPerson } },
-                    { "contactPhone", new[] { contactPhone } }
+                    { "contactPhone", new[] { contactPhone } },
+                    { "organisationUrl", new[] { organisationUrl } }
                 }
             };
 

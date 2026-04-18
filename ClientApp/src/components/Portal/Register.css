@@ -134,7 +134,8 @@
 .ss-form-group input[type="email"],
 .ss-form-group input[type="password"],
 .ss-form-group input[type="text"],
-.ss-form-group input[type="tel"] {
+.ss-form-group input[type="tel"],
+.ss-form-group input[type="url"] {
     padding: 0.6rem 0.85rem;
     font-size: 0.95rem;
     border: 1px solid rgba(0, 0, 0, 0.2);
