@@ -104,6 +104,24 @@ body {
     font-size: 0.9rem;
 }
 
+/* Back link */
+
+.ss-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: cadetblue;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.ss-back-link:hover {
+    color: #00c6b6;
+    text-decoration: underline;
+}
+
 /* Alerts */
 
 .ss-alert {
