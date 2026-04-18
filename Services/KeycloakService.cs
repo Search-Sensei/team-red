@@ -469,6 +469,90 @@ namespace S365.Search.Admin.UI.Services
             }
         }
 
+        public async Task<string> GetClientUuidAsync(string adminToken, string clientId)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/clients?clientId={clientId}";
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            var clients = doc.RootElement;
+
+            if (clients.GetArrayLength() == 0)
+                throw new Exception($"Client '{clientId}' not found in Keycloak.");
+
+            var uuid = clients[0].GetProperty("id").GetString();
+            return uuid ?? throw new Exception($"Client '{clientId}' has no id.");
+        }
+
+        public async Task<(string Id, string Name)> GetClientRoleAsync(string adminToken, string clientUuid, string roleName)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/clients/{clientUuid}/roles/{roleName}";
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to get client role '{RoleName}': {Status} {Error}", roleName, response.StatusCode, error);
+                throw new Exception($"Failed to get client role '{roleName}': {response.StatusCode} - {error}");
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            var id = doc.RootElement.GetProperty("id").GetString()
+                ?? throw new Exception($"Client role '{roleName}' has no id.");
+            var name = doc.RootElement.GetProperty("name").GetString()
+                ?? throw new Exception($"Client role '{roleName}' has no name.");
+
+            return (id, name);
+        }
+
+        public async Task AssignClientRoleToUserAsync(string adminToken, string userId, string clientUuid, string roleId, string roleName)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/users/{userId}/role-mappings/clients/{clientUuid}";
+
+            var rolePayload = new[]
+            {
+                new { id = roleId, name = roleName }
+            };
+
+            var content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(rolePayload),
+                Encoding.UTF8,
+                "application/json");
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.PostAsync(url, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to assign client role '{RoleName}' to user {UserId}: {Status} {Error}", roleName, userId, response.StatusCode, error);
+                throw new Exception($"Failed to assign client role to user: {response.StatusCode} - {error}");
+            }
+        }
+
         public async Task<SwitchContextResponse> SwitchContextAsync(SwitchContextRequest request)
         {
             EnsureEnabled();

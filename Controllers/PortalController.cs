@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using S365.Search.Admin.UI.Models;
 using S365.Search.Admin.UI.Services;
@@ -14,11 +15,13 @@ namespace S365.Search.Admin.UI.Controllers
     public class PortalController : ControllerBase
     {
         private readonly KeycloakService _keycloakService;
+        private readonly IConfiguration _configuration;
         private readonly ILogger<PortalController> _logger;
 
-        public PortalController(KeycloakService keycloakService, ILogger<PortalController> logger)
+        public PortalController(KeycloakService keycloakService, IConfiguration configuration, ILogger<PortalController> logger)
         {
             _keycloakService = keycloakService;
+            _configuration = configuration;
             _logger = logger;
         }
 
@@ -153,6 +156,12 @@ namespace S365.Search.Admin.UI.Controllers
 
                 // Step 3: Add user to organisation
                 await _keycloakService.AddUserToOrganizationAsync(adminToken, orgId, userId);
+
+                // Step 4: Assign org-admin client role to the user
+                var clientId = _configuration["KeycloakAuthentication:ClientId"] ?? "osp-adminui";
+                var clientUuid = await _keycloakService.GetClientUuidAsync(adminToken, clientId);
+                var (roleId, roleName) = await _keycloakService.GetClientRoleAsync(adminToken, clientUuid, "org-admin");
+                await _keycloakService.AssignClientRoleToUserAsync(adminToken, userId, clientUuid, roleId, roleName);
             }
             catch (Exception ex)
             {
