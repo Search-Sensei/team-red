@@ -1,6 +1,7 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { IAdminSettingsState } from "../../store/models/adminsettingsstate.interface";
+import { IAccount } from "../../store/models/account.interface";
 import { useSelector } from "react-redux";
 import { IStateType } from "../../store/models/root.interface";
 interface ShowAdminSidebar {
@@ -44,6 +45,10 @@ const LeftMenu: React.FC = () => {
     const adminSettingsState: IAdminSettingsState = useSelector(
         (state: IStateType) => state.adminSettingsState
     );
+    const account: IAccount = useSelector((state: IStateType) => state.account);
+    const canManageUsers = !account.isAuthenticationEnabled
+        || account.fullGroups.includes("org-admin")
+        || account.fullGroups.includes("admin");
 
     let [leftMenuVisibility, setLeftMenuVisibility] = useState(false);
 
@@ -101,6 +106,15 @@ const LeftMenu: React.FC = () => {
                         <span>Dashboard</span>
                     </Link>
                 </li>
+
+                {canManageUsers && (
+                    <li className="nav-item">
+                        <Link className="nav-link" to="/users">
+                            <i className="fas fa-fw fa-users"></i>
+                            <span>Users</span>
+                        </Link>
+                    </li>
+                )}
 
                 <hr className="sidebar-divider" />
 
