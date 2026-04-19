@@ -7,6 +7,6 @@ export interface IAccount {
     groups: string;
     fullGroups: Array<string>;
     groupIds?: Array<string>;
-    tenants?: Array<string>;
+    tenants?: Array<{ name: string; displayName: string }>;
     currentTenant?: string;
 }

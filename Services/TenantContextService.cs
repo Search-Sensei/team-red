@@ -84,6 +84,20 @@ namespace S365.Search.Admin.UI.Services
                 tokens.Add(new AuthenticationToken { Name = "scope", Value = response.Scope });
             }
 
+            if (!string.IsNullOrEmpty(response.IdToken))
+            {
+                tokens.Add(new AuthenticationToken { Name = "id_token", Value = response.IdToken });
+            }
+            else
+            {
+                // Preserve existing id_token if refresh didn't return a new one
+                var existingIdToken = await httpContext.GetTokenAsync("id_token");
+                if (!string.IsNullOrEmpty(existingIdToken))
+                {
+                    tokens.Add(new AuthenticationToken { Name = "id_token", Value = existingIdToken });
+                }
+            }
+
             authProperties.StoreTokens(tokens);
 
             await httpContext.SignInAsync(

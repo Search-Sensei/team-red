@@ -83,6 +83,9 @@ namespace S365.Search.Admin.UI
                 client.Timeout = System.TimeSpan.FromSeconds(120);
             });
 
+            // Register HttpClient for URL validation during registration
+            services.AddHttpClient("UrlValidation");
+
             services.AddControllers().ConfigureApiBehaviorOptions(options =>
             {
                 options.InvalidModelStateResponseFactory = context =>

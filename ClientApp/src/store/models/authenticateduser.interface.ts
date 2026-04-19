@@ -14,6 +14,6 @@ export interface IAuthenticatedUser {
     fullGroups: Array<string>;
     groupIds?: Array<string>;
     groupId?: string;
-    tenants?: Array<string>;
+    tenants?: Array<{ name: string; displayName: string }>;
     currentTenant?: string;
 }

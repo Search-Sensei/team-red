@@ -1,42 +1,52 @@
 <#import "template.ftl" as layout>
-<@layout.registrationLayout>
+<@layout.registrationLayout ; section>
 
-    <div class="ss-card-header">
-        <h2>Enter your password</h2>
-        <#if login.username?has_content>
-            <p>${login.username?html}</p>
+    <#if section = "header">
+        <div class="ss-card-header">
+            <h2>Enter your password</h2>
+            <#if login.username?has_content>
+                <p>${login.username?html}</p>
+            </#if>
+            <a href="${url.loginRestartFlowUrl}" class="ss-back-link">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Change email
+            </a>
+        </div>
+    <#elseif section = "form">
+
+        <#if message?has_content && message.summary?has_content>
+            <div class="ss-alert ss-alert-${message.type!'error'}">
+                ${kcSanitize(message.summary)?no_esc}
+            </div>
         </#if>
-    </div>
 
-    <#if message?has_content && message.summary?has_content>
-        <div class="ss-alert ss-alert-${message.type!'error'}">
-            ${kcSanitize(message.summary)?no_esc}
+        <form action="${url.loginAction}" method="post" class="ss-form">
+
+            <div class="ss-form-group">
+                <label for="password">Password</label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autocomplete="current-password"
+                    autofocus
+                    required
+                    placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
+                />
+            </div>
+
+            <button type="submit" class="ss-btn-primary">
+                Sign In
+            </button>
+
+        </form>
+
+        <div class="ss-form-footer">
+            <a href="${url.loginRestartFlowUrl}">Not you? Sign in with a different account</a>
         </div>
+
     </#if>
-
-    <form action="${url.loginAction}" method="post" class="ss-form">
-
-        <div class="ss-form-group">
-            <label for="password">Password</label>
-            <input
-                id="password"
-                name="password"
-                type="password"
-                autocomplete="current-password"
-                autofocus
-                required
-                placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
-            />
-        </div>
-
-        <button type="submit" class="ss-btn-primary">
-            Sign In
-        </button>
-
-    </form>
-
-    <div class="ss-form-footer">
-        <a href="${url.loginRestartFlowUrl}">Not you? Sign in with a different account</a>
-    </div>
 
 </@layout.registrationLayout>

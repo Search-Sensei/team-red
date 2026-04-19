@@ -12,7 +12,7 @@ namespace S365.Search.Admin.UI.Models
         public List<string> GroupIds { get; set; } = new List<string>();
         public string? GroupId { get; set; }
         public bool IsKeycloakToken { get; set; }
-        public List<string> Tenants { get; set; } = new List<string>();
+        public List<TenantInfo> Tenants { get; set; } = new List<TenantInfo>();
         public string? CurrentTenant { get; set; }
     }
 }

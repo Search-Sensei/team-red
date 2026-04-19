@@ -16,5 +16,6 @@ namespace S365.Search.Admin.UI.Models
         public int NotBeforePolicy { get; set; }
         public string? SessionState { get; set; }
         public string? Scope { get; set; }
+        public string? IdToken { get; set; }
     }
 }

@@ -104,6 +104,24 @@ body {
     font-size: 0.9rem;
 }
 
+/* Back link */
+
+.ss-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: cadetblue;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.ss-back-link:hover {
+    color: #00c6b6;
+    text-decoration: underline;
+}
+
 /* Alerts */
 
 .ss-alert {
@@ -242,6 +260,172 @@ body {
 
 .ss-form-footer a:hover {
     text-decoration: underline;
+}
+
+/* Organisation selector */
+
+.ss-org-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ss-org-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 0.35rem;
+    background-color: #ffffff;
+    text-decoration: none;
+    color: darkslategray;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+}
+
+.ss-org-item:hover {
+    border-color: #00c6b6;
+    box-shadow: 0 0 0 0.15rem rgba(0, 198, 182, 0.2);
+}
+
+.ss-org-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0e1e24, #00c6b6);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.ss-org-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ss-org-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #0e1e24;
+}
+
+.ss-org-arrow {
+    color: #5a5c69;
+    flex-shrink: 0;
+}
+
+/* Error page */
+
+.ss-error-container {
+    text-align: center;
+}
+
+.ss-error-icon {
+    margin-bottom: 1.25rem;
+}
+
+.ss-error-container .ss-alert {
+    text-align: left;
+}
+
+.ss-error-container .ss-form-footer {
+    margin-top: 1.5rem;
+}
+
+.ss-btn-block {
+    display: block;
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+    margin-top: 1rem;
+}
+
+/* Fallback styles for Keycloak default form elements inside ss-card */
+
+.ss-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.ss-card input[type="text"],
+.ss-card input[type="email"],
+.ss-card input[type="password"],
+.ss-card select {
+    padding: 0.6rem 0.85rem;
+    font-size: 0.95rem;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0.35rem;
+    background-color: #ffffff;
+    color: darkslategray;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+    width: 100%;
+}
+
+.ss-card input[type="text"]:focus,
+.ss-card input[type="email"]:focus,
+.ss-card input[type="password"]:focus,
+.ss-card select:focus {
+    border-color: #00c6b6;
+    box-shadow: 0 0 0 0.2rem rgba(0, 198, 182, 0.25);
+}
+
+.ss-card input[type="submit"],
+.ss-card button[type="submit"] {
+    margin-top: 0.5rem;
+    padding: 0.65rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #0e1e24;
+    border: none;
+    border-radius: 0.35rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    letter-spacing: 0.01em;
+}
+
+.ss-card input[type="submit"]:hover,
+.ss-card input[type="submit"]:focus,
+.ss-card button[type="submit"]:hover,
+.ss-card button[type="submit"]:focus {
+    background-color: #00c6b6;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 198, 182, 0.35);
+}
+
+.ss-card a {
+    color: cadetblue;
+    text-decoration: none;
+}
+
+.ss-card a:hover {
+    text-decoration: underline;
+}
+
+.ss-card label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #0e1e24;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.ss-card .pf-c-alert,
+.ss-card .alert {
+    padding: 0.75rem 1rem;
+    border-radius: 0.35rem;
+    font-size: 0.875rem;
+    margin-bottom: 1.25rem;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
 }
 
 /* Responsive: stack panels on small screens */

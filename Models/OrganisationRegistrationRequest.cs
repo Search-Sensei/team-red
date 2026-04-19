@@ -7,9 +7,6 @@ namespace S365.Search.Admin.UI.Models
         [Required(ErrorMessage = "Organisation name is required.")]
         public string OrganisationName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Address is required.")]
-        public string Address { get; set; } = string.Empty;
-
         [Required(ErrorMessage = "Contact person is required.")]
         public string ContactPerson { get; set; } = string.Empty;
 
@@ -24,5 +21,8 @@ namespace S365.Search.Admin.UI.Models
         [Required(ErrorMessage = "Password is required.")]
         [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
         public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Organisation URL is required.")]
+        public string OrganisationUrl { get; set; } = string.Empty;
     }
 }

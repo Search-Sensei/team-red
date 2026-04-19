@@ -35,7 +35,7 @@ function TopMenuAccount(): JSX.Element {
                 email: u.email ?? account.email,
                 name: u.name ?? account.name,
                 picture: u.picture ?? account.picture,
-                tenants: u.tenants ?? (u.groupId ? [u.groupId] : []),
+                tenants: u.tenants ?? (u.groupId ? [{ name: u.groupId, displayName: u.groupId }] : []),
                 currentTenant: u.currentTenant ?? u.groupId ?? account.currentTenant,
             };
             dispatch(login(next) as any);
@@ -149,17 +149,17 @@ function TopMenuAccount(): JSX.Element {
                         <>
                             <div className="dropdown-divider"></div>
                             <div className="dropdown-item text-muted small font-weight-bold">Tenants</div>
-                            {(account.tenants && account.tenants.length > 0 ? account.tenants : [account.currentTenant!]).map((t) => (
+                            {(account.tenants && account.tenants.length > 0 ? account.tenants : [{ name: account.currentTenant!, displayName: account.currentTenant! }]).map((t) => (
                                 <button
-                                    key={t}
+                                    key={t.name}
                                     type="button"
-                                    className={`dropdown-item small text-left ${t === account.currentTenant ? "font-weight-bold" : ""}`}
-                                    onClick={() => { void handleSwitchTenant(t); }}
-                                    disabled={t === account.currentTenant || switchingTenant !== null}
+                                    className={`dropdown-item small text-left ${t.name === account.currentTenant ? "font-weight-bold" : ""}`}
+                                    onClick={() => { void handleSwitchTenant(t.name); }}
+                                    disabled={t.name === account.currentTenant || switchingTenant !== null}
                                 >
-                                    {t}
-                                    {t === account.currentTenant ? " (current)" : ""}
-                                    {switchingTenant === t ? " (switching...)" : ""}
+                                    {t.displayName}
+                                    {t.name === account.currentTenant ? " (current)" : ""}
+                                    {switchingTenant === t.name ? " (switching...)" : ""}
                                 </button>
                             ))}
                         </>

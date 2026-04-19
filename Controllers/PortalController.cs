@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using S365.Search.Admin.UI.Models;
 using S365.Search.Admin.UI.Services;
 using System;
+using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace S365.Search.Admin.UI.Controllers
@@ -13,12 +16,16 @@ namespace S365.Search.Admin.UI.Controllers
     public class PortalController : ControllerBase
     {
         private readonly KeycloakService _keycloakService;
+        private readonly IConfiguration _configuration;
         private readonly ILogger<PortalController> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public PortalController(KeycloakService keycloakService, ILogger<PortalController> logger)
+        public PortalController(KeycloakService keycloakService, IConfiguration configuration, ILogger<PortalController> logger, IHttpClientFactory httpClientFactory)
         {
             _keycloakService = keycloakService;
+            _configuration = configuration;
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
 
         [HttpPost("invite")]
@@ -98,6 +105,37 @@ namespace S365.Search.Admin.UI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Validate that the organisation URL is reachable
+            try
+            {
+                var urlClient = _httpClientFactory.CreateClient("UrlValidation");
+                urlClient.Timeout = TimeSpan.FromSeconds(5);
+                var urlRequest = new HttpRequestMessage(HttpMethod.Head, request.OrganisationUrl.Trim());
+                urlRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (compatible; RegistrationValidator/1.0)");
+                var urlResponse = await urlClient.SendAsync(urlRequest);
+
+                // Some servers block HEAD, fall back to GET
+                if (urlResponse.StatusCode == System.Net.HttpStatusCode.MethodNotAllowed ||
+                    urlResponse.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    urlRequest = new HttpRequestMessage(HttpMethod.Get, request.OrganisationUrl.Trim());
+                    urlRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (compatible; RegistrationValidator/1.0)");
+                    urlResponse = await urlClient.SendAsync(urlRequest);
+                }
+
+                // Accept 2xx and 3xx (redirects) as valid
+                var statusCode = (int)urlResponse.StatusCode;
+                if (statusCode >= 400)
+                {
+                    return BadRequest(new { errors = new { organisationUrl = new[] { "Invalid URL. Please provide a valid and accessible website address." } } });
+                }
+            }
+            catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException)
+            {
+                _logger.LogWarning(ex, "Organisation URL validation failed for {Url}", request.OrganisationUrl);
+                return BadRequest(new { errors = new { organisationUrl = new[] { "Invalid URL. Please provide a valid and accessible website address." } } });
+            }
+
             string adminToken;
             try
             {
@@ -109,6 +147,9 @@ namespace S365.Search.Admin.UI.Controllers
                 return StatusCode(500, new { error = "Registration service is temporarily unavailable." });
             }
 
+            var displayName = request.OrganisationName.Trim();
+            var internalName = Regex.Replace(displayName, @"\s+", "-");
+
             string orgId = null;
             string userId = null;
 
@@ -119,10 +160,11 @@ namespace S365.Search.Admin.UI.Controllers
                 {
                     orgId = await _keycloakService.CreateOrganizationAsync(
                         adminToken,
-                        request.OrganisationName.Trim(),
-                        request.Address.Trim(),
+                        internalName,
+                        displayName,
                         request.ContactPerson.Trim(),
-                        request.ContactPhone.Trim());
+                        request.ContactPhone.Trim(),
+                        request.OrganisationUrl.Trim());
                 }
                 catch (Exception ex) when (ex.Message.Contains("Conflict"))
                 {
@@ -137,7 +179,7 @@ namespace S365.Search.Admin.UI.Controllers
                         request.Email.Trim(),
                         request.Password,
                         request.ContactPerson.Trim(),
-                        request.OrganisationName.Trim());
+                        internalName);
                 }
                 catch (Exception ex) when (ex.Message.Contains("Conflict"))
                 {
@@ -148,6 +190,12 @@ namespace S365.Search.Admin.UI.Controllers
 
                 // Step 3: Add user to organisation
                 await _keycloakService.AddUserToOrganizationAsync(adminToken, orgId, userId);
+
+                // Step 4: Assign org-admin client role to the user
+                var clientId = _configuration["KeycloakAuthentication:ClientId"] ?? "osp-adminui";
+                var clientUuid = await _keycloakService.GetClientUuidAsync(adminToken, clientId);
+                var (roleId, roleName) = await _keycloakService.GetClientRoleAsync(adminToken, clientUuid, "org-admin");
+                await _keycloakService.AssignClientRoleToUserAsync(adminToken, userId, clientUuid, roleId, roleName);
             }
             catch (Exception ex)
             {
