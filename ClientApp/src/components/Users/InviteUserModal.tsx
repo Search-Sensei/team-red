@@ -8,22 +8,14 @@ interface IProps {
     onHide: () => void;
 }
 
-enum InviteRole {
-    TenantUser = "TenantUser",
-}
-
-const roleOptions: { value: InviteRole; label: string }[] = [
-    { value: InviteRole.TenantUser, label: "Tenant User" },
-];
-
 const InviteUserModal: React.FC<IProps> = ({ show, onHide }) => {
-    const [formData, setFormData] = useState({ email: "", firstName: "", lastName: "", role: InviteRole.TenantUser });
+    const [formData, setFormData] = useState({ email: "", firstName: "", lastName: "" });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [successMessage, setSuccessMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
         if (fieldErrors[name]) {
@@ -36,7 +28,7 @@ const InviteUserModal: React.FC<IProps> = ({ show, onHide }) => {
     };
 
     const handleClose = () => {
-        setFormData({ email: "", firstName: "", lastName: "", role: InviteRole.TenantUser });
+        setFormData({ email: "", firstName: "", lastName: "" });
         setSuccessMessage("");
         setErrorMessage("");
         setFieldErrors({});
@@ -60,7 +52,7 @@ const InviteUserModal: React.FC<IProps> = ({ show, onHide }) => {
             if (response.ok) {
                 const data = await response.json();
                 setSuccessMessage(data.message || `Invitation sent to ${formData.email}.`);
-                setFormData({ email: "", firstName: "", lastName: "", role: InviteRole.TenantUser });
+                setFormData({ email: "", firstName: "", lastName: "" });
             } else if (response.status === 409) {
                 const data = await response.json();
                 setFieldErrors({ email: data.error });
@@ -117,21 +109,6 @@ const InviteUserModal: React.FC<IProps> = ({ show, onHide }) => {
                         {fieldErrors.email && (
                             <div className="invalid-feedback">{fieldErrors.email}</div>
                         )}
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="invite-role">Role</label>
-                        <select
-                            className="form-control"
-                            id="invite-role"
-                            name="role"
-                            value={formData.role}
-                            onChange={handleChange}
-                        >
-                            {roleOptions.map((opt) => (
-                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                        </select>
                     </div>
 
                     <div className="form-row">

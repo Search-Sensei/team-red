@@ -12,7 +12,5 @@ namespace S365.Search.Admin.UI.Models
         public string FirstName { get; set; } = string.Empty;
 
         public string LastName { get; set; } = string.Empty;
-
-        public InviteRole Role { get; set; } = InviteRole.TenantUser;
     }
 }
