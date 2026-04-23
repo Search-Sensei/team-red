@@ -44,7 +44,7 @@ configs:
 
       # --- Keycloak OIDC ---
       AUTH_METHOD=oidc
-      AUTH_AUTO_INITIATE=false
+      AUTH_AUTO_INITIATE=true
       OIDC_NAME=Keycloak
       OIDC_DISPLAY_NAME_CLAIMS=name
       OIDC_CLIENT_ID=bookstack
@@ -58,8 +58,9 @@ configs:
 
       # --- Role sync: Keycloak realm role -> BookStack role ---
       OIDC_USER_TO_GROUPS=true
-      OIDC_GROUPS_CLAIM=realm_access.roles
+      OIDC_GROUPS_CLAIM=roles
       OIDC_REMOVE_FROM_GROUPS=true
+  
 
 volumes:
   bookstack_data:

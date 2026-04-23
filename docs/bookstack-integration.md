@@ -45,36 +45,22 @@ File: `docker/docker-compose.bookstack.yml`
 **Image:** `lscr.io/linuxserver/bookstack:latest`
 **Exposed port:** `6875 → 80`
 
+The LinuxServer BookStack image reads its configuration from `/config/www/.env`. Rather than pass each variable through `environment:`, this compose file uses Docker Compose `configs.content` to render a complete `.env` file at container start. This matches the layout BookStack expects and avoids edge cases where individual env vars are not picked up by the image.
+
 ```yaml
 services:
   bookstack:
     image: lscr.io/linuxserver/bookstack:latest
     ports:
       - "6875:80"
-    environment:
-      - APP_URL=http://host.docker.internal:6875
-      - DB_HOST=bookstack-db
-      - DB_USER=bookstack
-      - DB_PASS=bookstack
-      - DB_DATABASE=bookstack
-      # --- Keycloak OIDC ---
-      - AUTH_METHOD=oidc
-      - AUTH_AUTO_INITIATE=false
-      - OIDC_NAME=Keycloak
-      - OIDC_DISPLAY_NAME_CLAIMS=name
-      - OIDC_CLIENT_ID=bookstack
-      - OIDC_CLIENT_SECRET=<bookstack-client-secret>
-      - OIDC_ISSUER=http://host.docker.internal:8080/realms/<realm-name>
-      - OIDC_ISSUER_DISCOVER=true
-      - OIDC_END_SESSION_ENDPOINT=true
-      # --- Role sync: Keycloak realm role → BookStack role ---
-      - OIDC_USER_TO_GROUPS=true
-      - OIDC_GROUPS_CLAIM=realm_access.roles
-      - OIDC_REMOVE_FROM_GROUPS=true
     depends_on:
-      - bookstack-db
+      bookstack-db:
+        condition: service_healthy
     volumes:
       - bookstack_data:/config
+    configs:
+      - source: bookstack_env
+        target: /config/www/.env
 
   bookstack-db:
     image: mysql:8.0
@@ -85,10 +71,49 @@ services:
       - MYSQL_PASSWORD=bookstack
     volumes:
       - bookstack_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "bookstack", "-pbookstack"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+configs:
+  bookstack_env:
+    content: |
+      APP_KEY=base64:<generate-a-new-laravel-app-key>
+      APP_URL=http://host.docker.internal:6875
+
+      DB_HOST=bookstack-db
+      DB_DATABASE=bookstack
+      DB_USERNAME=bookstack
+      DB_PASSWORD=bookstack
+
+      # --- Keycloak OIDC ---
+      AUTH_METHOD=oidc
+      AUTH_AUTO_INITIATE=true
+      OIDC_NAME=Keycloak
+      OIDC_DISPLAY_NAME_CLAIMS=name
+      OIDC_CLIENT_ID=bookstack
+      OIDC_CLIENT_SECRET=<bookstack-client-secret>
+      OIDC_ISSUER=http://host.docker.internal:8080/realms/<realm>
+      OIDC_ISSUER_DISCOVER=true
+      OIDC_END_SESSION_ENDPOINT=true
+
+      # --- Role sync: Keycloak realm role -> BookStack role ---
+      OIDC_USER_TO_GROUPS=true
+      OIDC_GROUPS_CLAIM=roles
+      OIDC_REMOVE_FROM_GROUPS=true
 
 volumes:
   bookstack_data:
   bookstack_db_data:
+```
+
+Generate a fresh `APP_KEY` with:
+
+```bash
+docker run --rm lscr.io/linuxserver/bookstack:latest php artisan key:generate --show
 ```
 
 Start the stack:
@@ -97,66 +122,98 @@ Start the stack:
 docker compose -f docker/docker-compose.bookstack.yml up -d
 ```
 
+Because `AUTH_METHOD=oidc` disables BookStack's local login form, the initial bootstrap has to run with OIDC off — see "Initial Setup" below.
+
 ---
 
 ## Environment Variable Reference
 
 | Variable | Value | Notes |
 |---|---|---|
+| `APP_KEY` | base64 Laravel app key | Must stay stable across restarts — rotating it invalidates encrypted data. Generate once and store as a secret. |
 | `APP_URL` | `http://host.docker.internal:6875` | Replace with FQDN in production |
-| `AUTH_METHOD` | `oidc` | Enable OIDC authentication |
-| `AUTH_AUTO_INITIATE` | `false` during bootstrap, `true` after | Controls whether SSO is forced or local login is allowed |
-| `OIDC_NAME` | `Keycloak` | Label shown on the BookStack login button |
+| `AUTH_METHOD` | `oidc` | Enables OIDC authentication. Disables the local email/password login form — see "Initial Setup" for the bootstrap procedure |
+| `AUTH_AUTO_INITIATE` | `true` | Skips BookStack's intermediate login page and redirects straight to Keycloak. Leave as `false` only during the one-off bootstrap |
+| `OIDC_NAME` | `Keycloak` | Label shown on the login button (if `AUTH_AUTO_INITIATE=false`) |
 | `OIDC_CLIENT_ID` | `bookstack` | Must match the Keycloak client ID |
 | `OIDC_CLIENT_SECRET` | *(from Keycloak)* | Store in a secret manager; never commit to git |
 | `OIDC_ISSUER` | `http://host.docker.internal:8080/realms/<realm>` | Must exactly match Keycloak's `iss` claim |
 | `OIDC_ISSUER_DISCOVER` | `true` | Auto-discover OIDC endpoints from `/.well-known/openid-configuration` |
 | `OIDC_END_SESSION_ENDPOINT` | `true` | Logging out of BookStack also logs out of Keycloak |
 | `OIDC_USER_TO_GROUPS` | `true` | Enable role synchronisation from the ID token |
-| `OIDC_GROUPS_CLAIM` | `realm_access.roles` | Keycloak realm roles live under this JWT path |
-| `OIDC_REMOVE_FROM_GROUPS` | `true` | Revoking a role in Keycloak demotes the user on next login |
-
-### ⚠️ Caveat — LinuxServer image variable names
-
-The LinuxServer BookStack image reads most OIDC settings from `/config/www/.env`. Depending on the image version, top-level environment variables may need to:
-
-- Be used as-is (`OIDC_*`), or
-- Be prefixed with `APP_` (`APP_OIDC_*`), or
-- Be provided via a mounted `.env` file instead of environment variables
-
-After first start, verify with:
-
-```bash
-docker logs bookstack 2>&1 | grep -i oidc
-```
-
-If OIDC configuration is not picked up, switch to a mounted `.env` file.
+| `OIDC_GROUPS_CLAIM` | `roles` | Top-level claim emitted by the Keycloak **User Realm Role** Protocol Mapper. See [keycloak-bookstack-integration.md](./keycloak-bookstack-integration.md) — the mapper is required; Keycloak does not put realm roles in the ID token by default |
+| `OIDC_REMOVE_FROM_GROUPS` | `true` | Revoking a role in Keycloak demotes the user on next login. Works together with a BookStack **Default User Role** of Viewer so users never end up with no role |
 
 ---
 
-## Initial Setup — Bootstrapping the First Admin
+## Initial Setup — Bootstrapping
 
-When BookStack starts for the first time, the database is empty and any user logging in via OIDC is assigned the default **Viewer** role — which means no one has the permissions required to configure role mapping. The following bootstrap sequence resolves this.
+BookStack's local email/password login is disabled whenever `AUTH_METHOD=oidc`. Several one-off configuration steps require admin access to BookStack's UI, so bootstrap runs with OIDC disabled, then OIDC is enabled at the end.
 
-1. Start the stack with `AUTH_AUTO_INITIATE=false` (default in this guide). This keeps the local login form available as a one-time bootstrap path.
-2. Retrieve the built-in admin credentials from the container logs:
+### Phase 1 — Start with OIDC disabled
+
+Comment out (or remove) the `AUTH_METHOD=oidc` line in the `bookstack_env` config block and start the stack:
+
+```bash
+docker compose -f docker/docker-compose.bookstack.yml up -d
+```
+
+On first start the image seeds the built-in admin account `admin@admin.com` / `password`.
+
+### Phase 2 — Configure BookStack as the built-in admin
+
+1. Open `http://host.docker.internal:6875` and sign in as `admin@admin.com` / `password`.
+2. **Settings → Users → Admin** → change the password immediately.
+3. **Settings → Customization → Default User Role** → set to **Viewer**. This ensures users created via OIDC always start with Viewer — the role that Keycloak-authenticated users without the `platform-admin` realm role should have.
+4. Sign out of BookStack.
+
+### Phase 3 — Map the Keycloak `platform-admin` role to BookStack Admin
+
+With OIDC currently disabled, BookStack's UI hides the **External Authentication IDs** field on roles. The mapping is added directly in the database:
+
+```bash
+docker exec $(docker compose -f docker/docker-compose.bookstack.yml ps -q bookstack-db) \
+  mysql -ubookstack -pbookstack bookstack -e \
+  "UPDATE roles SET external_auth_id='platform-admin' WHERE system_name='admin';"
+```
+
+Verify:
+
+```bash
+docker exec $(docker compose -f docker/docker-compose.bookstack.yml ps -q bookstack-db) \
+  mysql -ubookstack -pbookstack bookstack -e \
+  "SELECT id, display_name, system_name, external_auth_id FROM roles;"
+```
+
+The Admin row should show `external_auth_id = platform-admin`.
+
+### Phase 4 — Enable OIDC and recreate the container
+
+Uncomment `AUTH_METHOD=oidc` (and confirm `AUTH_AUTO_INITIATE=true`) in the config block, then:
+
+```bash
+docker compose -f docker/docker-compose.bookstack.yml up -d --force-recreate bookstack
+```
+
+`--force-recreate` forces Docker Compose to re-render the `bookstack_env` config from the updated compose file.
+
+### Phase 5 — Verify
+
+1. Open `http://host.docker.internal:6875` — should redirect to Keycloak automatically.
+2. Sign in with a Keycloak account that holds the `platform-admin` realm role. BookStack should land on the home page and show admin-only controls (Create/Edit, Settings menu).
+3. Sign out and sign in with a Keycloak account that does **not** hold `platform-admin`. BookStack should show a read-only view.
+4. Confirm role assignment in the database:
    ```bash
-   docker logs bookstack 2>&1 | grep -i 'admin@admin.com'
+   docker exec $(docker compose -f docker/docker-compose.bookstack.yml ps -q bookstack-db) \
+     mysql -ubookstack -pbookstack bookstack -e "
+   SELECT u.id, u.email, r.display_name AS role
+   FROM users u
+   LEFT JOIN role_user ru ON ru.user_id = u.id
+   LEFT JOIN roles r ON r.id = ru.role_id
+   WHERE u.id > 3
+   ORDER BY u.id;"
    ```
-   The default account is typically `admin@admin.com` / `password`.
-3. Open `http://host.docker.internal:6875` and sign in with those credentials.
-4. Go to **Settings → Users → Admin** and change the password immediately.
-5. Ensure Keycloak is fully configured (see [keycloak-bookstack-integration.md](./keycloak-bookstack-integration.md)).
-6. Sign out. Sign in once via the Keycloak SSO button — this creates a new BookStack user record (with the default Viewer role) for your Keycloak account.
-7. Sign out and sign back in with the built-in admin. Locate the OIDC user created in the previous step and change its role to **Admin**.
-8. Configure the OIDC role mapping rule: `platform-admin` → **Admin**. The exact path varies by BookStack version; typically under **Settings → Registration** or the OIDC authentication settings page.
-9. Sign out and sign in again via OIDC. Verify:
-   - A user with the `platform-admin` realm role sees "Create" and "Edit" controls.
-   - A user without that role sees a read-only interface.
-10. Once verified, set `AUTH_AUTO_INITIATE=true` and recreate the container. This disables the local login form, so all access must go through Keycloak.
-    ```bash
-    docker compose -f docker/docker-compose.bookstack.yml up -d
-    ```
+   `platform-admin` users should appear with role **Admin**; everyone else with **Viewer**.
 
 ---
 
@@ -167,7 +224,12 @@ When BookStack starts for the first time, the database is empty and any user log
 | User with realm role `platform-admin` | Admin | Create/edit/delete any content; manage users |
 | Any other OIDC user (`manager`, `org-admin`, regular users) | Viewer | Read-only browsing |
 
-Role mapping is enforced by BookStack based on the `realm_access.roles` claim in the token. No Keycloak-side Protocol Mapper is required.
+Role mapping is driven by a top-level `roles` claim in the ID token and relies on two pieces of configuration:
+
+1. On the **Keycloak** side — a **User Realm Role** Protocol Mapper on the `bookstack` client must be configured to emit the claim into the ID token. Keycloak does **not** include realm roles in the ID token by default. Setup is documented in [keycloak-bookstack-integration.md](./keycloak-bookstack-integration.md).
+2. On the **BookStack** side — the Admin role's `external_auth_id` column is set to `platform-admin` (see "Initial Setup" → Phase 3). Other BookStack roles are left without an external ID so they are not assigned by the OIDC sync.
+
+Combined with `OIDC_REMOVE_FROM_GROUPS=true` and BookStack's Default User Role set to Viewer, this produces the intended behaviour: users with `platform-admin` are promoted to Admin on login, and revoking the role in Keycloak demotes them on their next login. Users without the role remain Viewer.
 
 ---
 
@@ -177,14 +239,15 @@ Role mapping is enforced by BookStack based on the `realm_access.roles` claim in
 # Container is running
 docker compose -f docker/docker-compose.bookstack.yml ps
 
-# Confirm OIDC configuration was picked up
-docker logs bookstack 2>&1 | grep -i oidc
+# OIDC environment is correctly rendered into /config/www/.env
+BS=$(docker compose -f docker/docker-compose.bookstack.yml ps -q bookstack)
+docker exec "$BS" grep -E "^(AUTH_|OIDC_)" /config/www/.env
 
 # Hostname resolution (local development only)
 ping -c 1 host.docker.internal   # expect 127.0.0.1
 
 # OIDC discovery endpoint reachable from inside the BookStack container
-docker exec bookstack curl -s \
+docker exec "$BS" curl -s \
   http://host.docker.internal:8080/realms/<realm>/.well-known/openid-configuration | head
 ```
 
@@ -197,8 +260,9 @@ docker exec bookstack curl -s \
 | "Invalid issuer" / OIDC login fails immediately | Mismatch between `OIDC_ISSUER` and Keycloak's actual `iss` claim | Ensure both sides use the exact same hostname, port, and realm. `localhost` vs `host.docker.internal` is a common cause |
 | `500` on `/oidc/login` with log message `Issuer value must start with https://` | BookStack refuses a non-HTTPS issuer | Expected in production (use HTTPS). In local development, confirm the `OidcProviderSettings.php` bind mount from `docker/bookstack-patches/` is active — see "Local development notes" |
 | SSO redirects loop | Cookie domain mismatch | Access BookStack via the same hostname as configured in `APP_URL` — do not mix `localhost` and `host.docker.internal` |
-| Users cannot see "Create" buttons even after being assigned `platform-admin` | Role mapping not configured or wrong claim path | Confirm `OIDC_GROUPS_CLAIM=realm_access.roles` and that the BookStack role mapping rule maps `platform-admin` → Admin |
-| OIDC environment variables appear ignored | LinuxServer image version reads from `.env` file only | Mount a custom `/config/www/.env` file instead of using environment variables |
+| Users cannot see "Create" buttons even after being assigned `platform-admin` | Role mapping not configured on the Admin role | Verify the Admin role has `external_auth_id='platform-admin'` (see "Initial Setup" → Phase 3). Confirm `OIDC_GROUPS_CLAIM=roles` |
+| All OIDC-authenticated users end up with no role (`role = NULL` in the database) | Either the `roles` claim is missing from the ID token, or BookStack's Default User Role is not set | Check the ID token contents (temporarily set `OIDC_DUMP_USER_DETAILS=true`, log in, inspect `/config/log/bookstack/laravel.log`); confirm the Keycloak User Realm Role Protocol Mapper is configured and its "Add to ID token" checkbox is on. Confirm **Settings → Customization → Default User Role = Viewer** in BookStack |
+| ID token logged by `OIDC_DUMP_USER_DETAILS` does not contain a `roles` claim | The Keycloak Protocol Mapper is missing, its Token Claim Name is wrong, or "Add to ID token" is disabled | See [keycloak-bookstack-integration.md](./keycloak-bookstack-integration.md) → Protocol Mapper section. The mapper must be a **User Realm Role** mapper on the `bookstack` client's dedicated scope with `Token Claim Name=roles`, `Multivalued=ON`, and `Add to ID token=ON` |
 | BookStack session remains active after adminui logout | Backchannel Logout not working | Confirm Keycloak has the correct Backchannel Logout URL and that BookStack's OIDC plugin supports it; otherwise fall back to Front-channel Logout |
 
 ---
