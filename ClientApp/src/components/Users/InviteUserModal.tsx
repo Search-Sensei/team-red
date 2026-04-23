@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import Modal from "react-bootstrap/Modal";
-import Button from "react-bootstrap/Button";
 import fetcher from "../Fetcher";
 
 interface IProps {
@@ -9,13 +8,13 @@ interface IProps {
 }
 
 const InviteUserModal: React.FC<IProps> = ({ show, onHide }) => {
-    const [formData, setFormData] = useState({ email: "", firstName: "", lastName: "" });
+    const [formData, setFormData] = useState({ email: "", firstName: "", lastName: "", role: "contributor" });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [successMessage, setSuccessMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
         if (fieldErrors[name]) {
@@ -28,7 +27,7 @@ const InviteUserModal: React.FC<IProps> = ({ show, onHide }) => {
     };
 
     const handleClose = () => {
-        setFormData({ email: "", firstName: "", lastName: "" });
+        setFormData({ email: "", firstName: "", lastName: "", role: "contributor" });
         setSuccessMessage("");
         setErrorMessage("");
         setFieldErrors({});
@@ -52,7 +51,7 @@ const InviteUserModal: React.FC<IProps> = ({ show, onHide }) => {
             if (response.ok) {
                 const data = await response.json();
                 setSuccessMessage(data.message || `Invitation sent to ${formData.email}.`);
-                setFormData({ email: "", firstName: "", lastName: "" });
+                setFormData({ email: "", firstName: "", lastName: "", role: "contributor" });
             } else if (response.status === 409) {
                 const data = await response.json();
                 setFieldErrors({ email: data.error });
@@ -81,72 +80,105 @@ const InviteUserModal: React.FC<IProps> = ({ show, onHide }) => {
 
     return (
         <Modal show={show} onHide={handleClose}>
-            <Modal.Header closeButton>
-                <Modal.Title>Invite User</Modal.Title>
+            <Modal.Header closeButton style={{ borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+                <Modal.Title style={{ fontSize: "1.2rem", fontWeight: 700, color: "#1d5d66" }}>
+                    Invite User
+                </Modal.Title>
             </Modal.Header>
             <form onSubmit={handleSubmit}>
-                <Modal.Body>
+                <Modal.Body style={{ padding: "1.5rem 2rem" }}>
                     {successMessage && (
-                        <div className="alert alert-success" role="alert">{successMessage}</div>
+                        <div className="ss-alert ss-alert-success">{successMessage}</div>
                     )}
                     {errorMessage && (
-                        <div className="alert alert-danger" role="alert">{errorMessage}</div>
+                        <div className="ss-alert ss-alert-error">{errorMessage}</div>
                     )}
 
-                    <div className="form-group">
-                        <label htmlFor="invite-email">Email address</label>
-                        <input
-                            type="email"
-                            className={`form-control ${fieldErrors.email ? "is-invalid" : ""}`}
-                            id="invite-email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder="user@example.com"
-                            required
-                            autoFocus
-                        />
-                        {fieldErrors.email && (
-                            <div className="invalid-feedback">{fieldErrors.email}</div>
-                        )}
-                    </div>
-
-                    <div className="form-row">
-                        <div className="form-group col-md-6">
-                            <label htmlFor="invite-firstName">First name</label>
+                    <div className="ss-form" style={{ gap: "1rem" }}>
+                        <div className="ss-form-group">
+                            <label htmlFor="invite-email">Email address</label>
                             <input
-                                type="text"
-                                className={`form-control ${fieldErrors.firstName ? "is-invalid" : ""}`}
-                                id="invite-firstName"
-                                name="firstName"
-                                value={formData.firstName}
+                                type="email"
+                                className={fieldErrors.email ? "ss-input-error" : ""}
+                                id="invite-email"
+                                name="email"
+                                value={formData.email}
                                 onChange={handleChange}
+                                placeholder="user@example.com"
                                 required
+                                autoFocus
                             />
-                            {fieldErrors.firstName && (
-                                <div className="invalid-feedback">{fieldErrors.firstName}</div>
+                            {fieldErrors.email && (
+                                <span className="ss-field-error">{fieldErrors.email}</span>
                             )}
                         </div>
-                        <div className="form-group col-md-6">
-                            <label htmlFor="invite-lastName">Last name</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                id="invite-lastName"
-                                name="lastName"
-                                value={formData.lastName}
+
+                        <div className="ss-form-row">
+                            <div className="ss-form-group">
+                                <label htmlFor="invite-firstName">First name</label>
+                                <input
+                                    type="text"
+                                    className={fieldErrors.firstName ? "ss-input-error" : ""}
+                                    id="invite-firstName"
+                                    name="firstName"
+                                    value={formData.firstName}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="Jane"
+                                />
+                                {fieldErrors.firstName && (
+                                    <span className="ss-field-error">{fieldErrors.firstName}</span>
+                                )}
+                            </div>
+                            <div className="ss-form-group">
+                                <label htmlFor="invite-lastName">Last name</label>
+                                <input
+                                    type="text"
+                                    id="invite-lastName"
+                                    name="lastName"
+                                    value={formData.lastName}
+                                    onChange={handleChange}
+                                    placeholder="Doe"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="ss-form-group">
+                            <label htmlFor="invite-role">Role</label>
+                            <select
+                                className={fieldErrors.role ? "ss-input-error" : ""}
+                                id="invite-role"
+                                name="role"
+                                value={formData.role}
                                 onChange={handleChange}
-                            />
+                                required
+                            >
+                                <option value="contributor">Contributor</option>
+                                <option value="org-admin">Org Admin</option>
+                            </select>
+                            {fieldErrors.role && (
+                                <span className="ss-field-error">{fieldErrors.role}</span>
+                            )}
                         </div>
                     </div>
                 </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
+                <Modal.Footer style={{ borderTop: "1px solid rgba(0,0,0,0.08)", gap: "0.5rem" }}>
+                    <button
+                        type="button"
+                        className="ss-btn-secondary"
+                        onClick={handleClose}
+                        disabled={isSubmitting}
+                    >
                         Cancel
-                    </Button>
-                    <Button variant="primary" type="submit" disabled={isSubmitting}>
+                    </button>
+                    <button
+                        type="submit"
+                        className="ss-btn-primary"
+                        disabled={isSubmitting}
+                        style={{ marginTop: 0 }}
+                    >
                         {isSubmitting ? "Sending..." : "Send Invitation"}
-                    </Button>
+                    </button>
                 </Modal.Footer>
             </form>
         </Modal>

@@ -97,7 +97,6 @@ const Register: React.FC = () => {
             <div className="ss-panel-left">
                 <div className="ss-brand">
                     <img src={logo} alt="Search Sensei" className="ss-logo" />
-                    <h1 className="ss-brand-name">Search Sensei</h1>
                     <p className="ss-brand-tagline">Customer Portal</p>
                 </div>
             </div>

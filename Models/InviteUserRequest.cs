@@ -12,5 +12,9 @@ namespace S365.Search.Admin.UI.Models
         public string FirstName { get; set; } = string.Empty;
 
         public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Role is required.")]
+        [RegularExpression("^(org-admin|contributor)$", ErrorMessage = "Role must be 'org-admin' or 'contributor'.")]
+        public string Role { get; set; } = string.Empty;
     }
 }
