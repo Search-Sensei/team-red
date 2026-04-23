@@ -1,0 +1,66 @@
+services:
+  bookstack:
+    image: lscr.io/linuxserver/bookstack:latest
+    ports:
+      - "6875:80"
+    depends_on:
+      bookstack-db:
+        condition: service_healthy
+    volumes:
+      - bookstack_data:/config
+      # Local-dev patch: relax OIDC issuer check to accept http:// (see docker/bookstack-patches/README.md)
+      - ./bookstack-patches/OidcProviderSettings.php:/app/www/app/Access/Oidc/OidcProviderSettings.php:ro
+    configs:
+      - source: bookstack_env
+        target: /config/www/.env
+
+  bookstack-db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=bookstack
+      - MYSQL_USER=bookstack
+      - MYSQL_PASSWORD=bookstack
+    volumes:
+      - bookstack_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "bookstack", "-pbookstack"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+configs:
+  bookstack_env:
+    content: |
+      # --- replace in production ---
+      APP_KEY=base64:+RI7gOUO6dSGVv8ii1vwR/iOm8Tgfz1zY8o6+tgAl1E=
+      APP_URL=http://host.docker.internal:6875
+
+      DB_HOST=bookstack-db
+      DB_DATABASE=bookstack
+      DB_USERNAME=bookstack
+      DB_PASSWORD=bookstack
+
+      # --- Keycloak OIDC ---
+      AUTH_METHOD=oidc
+      AUTH_AUTO_INITIATE=false
+      OIDC_NAME=Keycloak
+      OIDC_DISPLAY_NAME_CLAIMS=name
+      OIDC_CLIENT_ID=bookstack
+
+      # --- replace in production ---
+      OIDC_CLIENT_SECRET=FE3jDUXRkh3MbwyuU3loSEeK6gpb58TH
+      OIDC_ISSUER=http://host.docker.internal:8080/realms/osp-dev
+      
+      OIDC_ISSUER_DISCOVER=true
+      OIDC_END_SESSION_ENDPOINT=true
+
+      # --- Role sync: Keycloak realm role -> BookStack role ---
+      OIDC_USER_TO_GROUPS=true
+      OIDC_GROUPS_CLAIM=realm_access.roles
+      OIDC_REMOVE_FROM_GROUPS=true
+
+volumes:
+  bookstack_data:
+  bookstack_db_data:
