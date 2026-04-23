@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 
 const SupportMenu = () => {
   const [openMenu, setOpenMenu] = useState(false);
@@ -14,6 +13,7 @@ const SupportMenu = () => {
         className={`subMenu-item nav-link  ${openMenu && "d-block"}`}
         href={process.env.REACT_APP_KNOWLEDGE_BASE_LINK}
         target="_blank"
+        rel="noreferrer"
       >
         Documentation
       </a>
