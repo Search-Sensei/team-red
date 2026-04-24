@@ -253,6 +253,9 @@ namespace S365.Search.Admin.UI.Extensions
     // This is a local cookie session store
     // Storing Cookies to simplify cookies header.
     // In real production, should be hooked to a Redis
+    // TODO: Replace with a Redis-backed IDistributedCache before going to production or scaling out.
+    // Current in-memory store loses all sessions on app restart and does not sync across instances,
+    // which will manifest as forced re-logins after every deploy and apparent random logouts under load balancing.
     internal class SessionStore : ITicketStore
     {
         private ConcurrentDictionary<string, AuthenticationTicket> mytickets = new();
