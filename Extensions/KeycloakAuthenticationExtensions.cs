@@ -70,7 +70,7 @@ namespace S365.Search.Admin.UI.Extensions
                 options.SignedOutCallbackPath = "/signout-callback-oidc";
                 options.RequireHttpsMetadata = keycloakConfig.GetValue<bool>("RequireHttpsMetadata");
                 options.UsePkce = keycloakConfig.GetValue<bool>("UsePkce");
-                
+
                 // Allow HTTP Keycloak in production temporarily
                 options.BackchannelHttpHandler = new HttpClientHandler()
                 {

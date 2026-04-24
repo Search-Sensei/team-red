@@ -14,7 +14,6 @@
     <div class="ss-panel-left">
         <div class="ss-brand">
             <img src="${url.resourcesPath}/img/logo.png" alt="Search Sensei" class="ss-logo" />
-            <h1 class="ss-brand-name">Search Sensei</h1>
             <p class="ss-brand-tagline">Customer Portal</p>
         </div>
     </div>

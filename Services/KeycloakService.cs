@@ -245,10 +245,19 @@ namespace S365.Search.Admin.UI.Services
 
             var url = $"/admin/realms/{realm}/organizations";
 
+            // Keycloak 26 requires at least one domain — derive it from the organisation URL
+            string domainName = organisationUrl;
+            if (Uri.TryCreate(organisationUrl, UriKind.Absolute, out var parsedUri))
+                domainName = parsedUri.Host;
+
             var orgPayload = new
             {
                 name = name,
                 enabled = true,
+                domains = new[]
+                {
+                    new { name = domainName, verified = false }
+                },
                 attributes = new Dictionary<string, string[]>
                 {
                     { "displayName", new[] { displayName } },
@@ -620,6 +629,169 @@ namespace S365.Search.Admin.UI.Services
                     throw new KeycloakConflictException($"User {email} is already a member of the organisation.");
                 throw new Exception($"Failed to invite user: {(int)response.StatusCode} - {error}");
             }
+        }
+
+        /// <summary>
+        /// Creates a disabled user in Keycloak with UPDATE_PASSWORD as a required action.
+        /// The user cannot log in until they complete the action via the invite email link.
+        /// Sets an invitedAt attribute (UTC ISO-8601) so the cleanup job can identify and
+        /// remove users who never accept within the allowed window.
+        /// </summary>
+        public async Task<string> CreateInvitedUserAsync(
+            string adminToken, string email, string firstName, string lastName, string orgName)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/users";
+
+            var userPayload = new
+            {
+                username = email,
+                email,
+                firstName,
+                lastName,
+                enabled = true,
+                requiredActions = new[] { "UPDATE_PASSWORD" },
+                attributes = new Dictionary<string, string[]>
+                {
+                    { "active_tenant", new[] { orgName } },
+                    { "tenants",       new[] { orgName } },
+                    { "invitedAt",     new[] { DateTime.UtcNow.ToString("o") } }
+                }
+            };
+
+            var content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(userPayload),
+                Encoding.UTF8,
+                "application/json");
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.PostAsync(url, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to create invited user {Email}: {Status} {Error}", email, response.StatusCode, error);
+                if ((int)response.StatusCode == 409)
+                    throw new KeycloakConflictException($"A user with email {email} already exists.");
+                throw new Exception($"Failed to create invited user: {response.StatusCode} - {error}");
+            }
+
+            var locationHeader = response.Headers.Location?.ToString();
+            if (string.IsNullOrEmpty(locationHeader))
+                throw new Exception("Keycloak did not return a Location header for the invited user.");
+
+            return locationHeader.Split('/').Last();
+        }
+
+        /// <summary>
+        /// Triggers Keycloak to send the UPDATE_PASSWORD action email for the given user.
+        /// The link in the email is valid for 24 hours (86400 seconds).
+        /// After the user sets their password via the themed Keycloak page, their account
+        /// is automatically enabled and the required action is cleared.
+        /// </summary>
+        public async Task SendExecuteActionsEmailAsync(string adminToken, string userId, string clientId, string redirectUri)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var lifespan = 86400; // 24 hours in seconds
+            var url = $"/admin/realms/{realm}/users/{userId}/execute-actions-email" +
+                      $"?lifespan={lifespan}" +
+                      $"&client_id={Uri.EscapeDataString(clientId)}" +
+                      $"&redirect_uri={Uri.EscapeDataString(redirectUri)}";
+
+            var actionsPayload = new[] { "UPDATE_PASSWORD" };
+            var content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(actionsPayload),
+                Encoding.UTF8,
+                "application/json");
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.PutAsync(url, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to send execute-actions email to user {UserId}: {Status} {Error}", userId, response.StatusCode, error);
+                throw new Exception($"Failed to send invite email: {response.StatusCode} - {error}");
+            }
+        }
+
+        /// <summary>
+        /// Returns Keycloak user IDs of disabled users who were invited more than
+        /// <paramref name="expiry"/> ago but never accepted (invitedAt attribute present,
+        /// account still disabled). Used by the cleanup background service.
+        /// </summary>
+        public async Task<List<string>> GetExpiredInvitedUserIdsAsync(string adminToken, TimeSpan expiry)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            // Fetch all users that still have UPDATE_PASSWORD as a required action —
+            // these are invited users who have not yet accepted. Page size 1000 is
+            // sufficient for typical org sizes; increase if needed.
+            var url = $"/admin/realms/{realm}/users?max=1000";
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+
+            var cutoff = DateTime.UtcNow - expiry;
+            var expiredIds = new List<string>();
+
+            foreach (var userEl in doc.RootElement.EnumerateArray())
+            {
+                if (!userEl.TryGetProperty("id", out var idProp))
+                    continue;
+
+                var userId = idProp.GetString();
+                if (string.IsNullOrEmpty(userId))
+                    continue;
+
+                // Only target users that carry the invitedAt attribute
+                if (!userEl.TryGetProperty("attributes", out var attrs))
+                    continue;
+
+                if (!attrs.TryGetProperty("invitedAt", out var invitedAtArr) ||
+                    invitedAtArr.ValueKind != JsonValueKind.Array ||
+                    invitedAtArr.GetArrayLength() == 0)
+                    continue;
+
+                var invitedAtStr = invitedAtArr[0].GetString();
+                if (!DateTime.TryParse(invitedAtStr, null,
+                        System.Globalization.DateTimeStyles.RoundtripKind, out var invitedAt))
+                    continue;
+
+                if (invitedAt >= cutoff)
+                    continue;
+
+                // Confirm they still have UPDATE_PASSWORD pending — if they accepted,
+                // Keycloak removes it from requiredActions automatically
+                if (!userEl.TryGetProperty("requiredActions", out var actions) ||
+                    actions.ValueKind != JsonValueKind.Array)
+                    continue;
+
+                var stillPending = actions.EnumerateArray()
+                    .Any(a => a.GetString() == "UPDATE_PASSWORD");
+
+                if (stillPending)
+                    expiredIds.Add(userId);
+            }
+
+            return expiredIds;
         }
     }
 }

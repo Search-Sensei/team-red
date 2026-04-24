@@ -69,32 +69,62 @@ namespace S365.Search.Admin.UI.Controllers
                 return StatusCode(500, new { error = "Failed to locate your organisation." });
             }
 
+            var email     = request.Email.Trim();
+            var firstName = request.FirstName.Trim();
+            var lastName  = request.LastName.Trim();
+            var role      = request.Role.Trim();
+
+            // Step 1: Create a disabled user in Keycloak tagged with invitedAt
+            string userId;
             try
             {
-                await _keycloakService.InviteUserToOrganizationAsync(
-                    adminToken,
-                    orgId,
-                    request.Email.Trim(),
-                    request.FirstName.Trim(),
-                    request.LastName.Trim());
+                userId = await _keycloakService.CreateInvitedUserAsync(adminToken, email, firstName, lastName, orgName);
             }
             catch (KeycloakConflictException)
             {
-                return Conflict(new { field = "email", error = $"{request.Email} is already a member of the organisation." });
+                return Conflict(new { field = "email", error = $"A user with email {email} already exists." });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to invite user '{Email}' to organisation '{OrgName}'.", request.Email, orgName);
-                return StatusCode(500, new { error = "Failed to send invitation. Please try again." });
+                _logger.LogError(ex, "Failed to create invited user '{Email}'.", email);
+                return StatusCode(500, new { error = "Failed to create the user. Please try again." });
             }
 
-            _logger.LogInformation("User '{Email}' invited to organisation '{OrgName}'.", request.Email, orgName);
+            try
+            {
+                // Step 2: Assign the requested client role (org-admin or contributor)
+                var clientId   = _configuration["KeycloakAuthentication:ClientId"] ?? "osp-adminui";
+                var clientUuid = await _keycloakService.GetClientUuidAsync(adminToken, clientId);
+                var (roleId, roleName) = await _keycloakService.GetClientRoleAsync(adminToken, clientUuid, role);
+                await _keycloakService.AssignClientRoleToUserAsync(adminToken, userId, clientUuid, roleId, roleName);
+
+                // Step 3: Add user to the organisation
+                await _keycloakService.AddUserToOrganizationAsync(adminToken, orgId, userId);
+
+                // Step 4: Send invite email via Keycloak execute-actions-email (24 h link)
+                var appBaseUrl  = _configuration["Application:BaseUrl"]
+                                  ?? $"{Request.Scheme}://{Request.Host}";
+                var redirectUri = appBaseUrl.TrimEnd('/') + "/";
+                await _keycloakService.SendExecuteActionsEmailAsync(adminToken, userId, clientId, redirectUri);
+            }
+            catch (Exception ex)
+            {
+                // Rollback: remove the user we just created so the admin can retry cleanly
+                _logger.LogError(ex, "Invite flow failed for '{Email}' — rolling back user creation.", email);
+                await _keycloakService.DeleteUserAsync(adminToken, userId);
+                return StatusCode(500, new { error = "Failed to complete the invitation. Please try again." });
+            }
+
+            _logger.LogInformation(
+                "User '{Email}' invited to organisation '{OrgName}' with role '{Role}'.",
+                email, orgName, role);
 
             return Ok(new
             {
-                message = $"Invitation sent successfully to {request.Email}.",
-                email = request.Email,
-                organisationName = orgName
+                message          = $"Invitation sent successfully to {email}.",
+                email,
+                organisationName = orgName,
+                role
             });
         }
 

@@ -1,6 +1,6 @@
 /* =====================================================
    Search Sensei – Keycloak Login Theme
-     Dark:    #0e1e24
+     Dark:    #1d5d66
      Teal:    #00c6b6
      Cream:   #faf5ec
      Text:    darkslategray / #5a5c69
@@ -29,7 +29,7 @@ body {
 /* Left branding panel */
 .ss-panel-left {
     flex: 1;
-    background: linear-gradient(180deg, #0e1e24 10%, #00c6b6 100%);
+    background: linear-gradient(180deg, #1d5d66 10%, #00c6b6 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -54,26 +54,18 @@ body {
 }
 
 .ss-logo {
-    width: 80px;
-    height: 80px;
+    width: 240px;
+    height: auto;
     object-fit: contain;
     margin-bottom: 1.5rem;
-    background: #ffffff;
-    padding: 12px;
-    border-radius: 50%;
-}
-
-.ss-brand-name {
-    font-size: 2rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    margin-bottom: 0.5rem;
 }
 
 .ss-brand-tagline {
     font-size: 1rem;
     opacity: 0.8;
     font-weight: 300;
+    color: #ffffff;
+    margin-top: 0.25rem;
 }
 
 /* Card */
@@ -95,7 +87,7 @@ body {
 .ss-card-header h2 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #0e1e24;
+    color: #1d5d66;
     margin-bottom: 0.25rem;
 }
 
@@ -172,7 +164,7 @@ body {
 .ss-form-group label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #0e1e24;
+    color: #1d5d66;
 }
 
 .ss-form-group input[type="email"],
@@ -223,7 +215,7 @@ body {
     font-size: 1rem;
     font-weight: 600;
     color: #ffffff;
-    background-color: #0e1e24;
+    background-color: #1d5d66;
     border: none;
     border-radius: 0.35rem;
     cursor: pointer;
@@ -293,7 +285,7 @@ body {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #0e1e24, #00c6b6);
+    background: linear-gradient(135deg, #1d5d66, #00c6b6);
     color: #ffffff;
     display: flex;
     align-items: center;
@@ -311,7 +303,7 @@ body {
 .ss-org-name {
     font-weight: 600;
     font-size: 0.95rem;
-    color: #0e1e24;
+    color: #1d5d66;
 }
 
 .ss-org-arrow {
@@ -383,7 +375,7 @@ body {
     font-size: 1rem;
     font-weight: 600;
     color: #ffffff;
-    background-color: #0e1e24;
+    background-color: #1d5d66;
     border: none;
     border-radius: 0.35rem;
     cursor: pointer;
@@ -412,7 +404,7 @@ body {
 .ss-card label {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #0e1e24;
+    color: #1d5d66;
     margin-bottom: 0.25rem;
     display: block;
 }
@@ -426,6 +418,28 @@ body {
     background-color: #f8d7da;
     border: 1px solid #f5c6cb;
     color: #721c24;
+}
+
+/* Read-only info inputs (invite acceptance) */
+
+.ss-input-readonly {
+    padding: 0.6rem 0.85rem;
+    font-size: 0.95rem;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 0.35rem;
+    background-color: #f0f2f4;
+    color: #5a5c69;
+    cursor: not-allowed;
+    width: 100%;
+}
+
+.ss-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    padding-bottom: 1.25rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 /* Responsive: stack panels on small screens */
