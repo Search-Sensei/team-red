@@ -69,17 +69,18 @@ Proceed through the creation wizard; the detailed settings are described below.
 
 > In production, replace every `http://host.docker.internal:6875` above with the real BookStack FQDN, e.g. `https://kb.company.com`. See the "Production Replacement Checklist" below.
 
-### 2.2 Advanced tab — Backchannel Logout
+### 2.2 Advanced tab — Logout settings
+
+Leave all fields in the **Logout settings** block at their defaults (empty / off):
 
 | Field | Value |
 |---|---|
-| Backchannel logout URL | `http://host.docker.internal:6875/oidc/logout` |
-| Backchannel logout session required | **ON** |
-| Backchannel logout revoke offline sessions | ON |
+| Front channel logout | OFF |
+| Backchannel logout URL | *(empty)* |
+| Backchannel logout session required | OFF |
+| Backchannel logout revoke offline sessions | OFF |
 
-This configuration ensures that when a user logs out of the OSP admin portal (which triggers a full Keycloak logout), Keycloak notifies BookStack so it can terminate the matching session.
-
-> **⚠️ Caveat:** BookStack's OIDC implementation may not fully support backchannel logout across all versions. If you observe that BookStack sessions remain active after adminui logout, switch from **Backchannel Logout URL** to **Front-channel Logout URL** (which triggers the logout via browser iframes instead).
+**Rationale.** BookStack's OIDC plugin does not implement the OIDC Back-Channel Logout spec: its `/oidc/logout` endpoint is a browser-only, CSRF-protected Laravel route that does not parse `logout_token` JWTs or terminate sessions by `sid`. Configuring a Backchannel Logout URL only causes Keycloak to fire a logout notification on every user logout that BookStack rejects with HTTP 419 — no effect other than log noise. See the "Logout behaviour" notes in [bookstack-integration.md](./bookstack-integration.md) for the full explanation and accepted behaviour.
 
 ### 2.3 Credentials tab
 
@@ -171,7 +172,6 @@ Before going live, replace every occurrence of `http://host.docker.internal:6875
 - Valid redirect URIs
 - Valid post logout redirect URIs
 - Web origins
-- Backchannel logout URL
 
 And replace the Keycloak URL (`http://host.docker.internal:8080`) with the production Keycloak FQDN in:
 
@@ -189,7 +189,8 @@ The production deployment topology (dedicated domain, subpath, or subdomain) sho
 | SSO redirects loop endlessly | Cookie domain mismatch — the user accessed BookStack via a different hostname than configured in `APP_URL` | Always use the same hostname in both BookStack's `APP_URL` and browser access |
 | `platform-admin` users still appear as Viewer in BookStack | Role mapping missing, `OIDC_GROUPS_CLAIM` wrong, or the Protocol Mapper isn't emitting the claim into the ID token | Confirm the User Realm Role Protocol Mapper (section 3) has `Token Claim Name=roles` and `Add to ID token=ON`. On the BookStack side, `OIDC_GROUPS_CLAIM=roles` and Admin role `external_auth_id='platform-admin'` |
 | `roles` claim is absent from the ID token | The Protocol Mapper was created on the wrong scope or `Add to ID token` is off | The mapper must live on the `bookstack` client's **dedicated** scope (not a generic realm-wide scope). Re-check each checkbox in the mapper configuration |
-| BookStack session remains active after adminui logout | Backchannel Logout not functioning | Verify the Backchannel Logout URL is correct and BookStack's plugin handles it; otherwise switch to Front-channel Logout |
+| BookStack session remains active after adminui logout | **Expected** — BookStack does not implement OIDC back-channel logout, so a Keycloak-initiated logout does not propagate to BookStack | Leave Keycloak's Backchannel Logout URL empty (see section 2.2). Full rationale and mitigations documented in [bookstack-integration.md](./bookstack-integration.md#logout-behaviour-known-limitation) |
+| Admin UI user is already signed in to Keycloak but BookStack prompts them to sign in again | Admin UI and BookStack point to Keycloak at **different hostnames**, so the browser's Keycloak session cookie is scoped to one origin and does not apply to the other | All applications sharing this Keycloak realm must use the identical Keycloak hostname, port and scheme in their OIDC configuration. See [bookstack-integration.md](./bookstack-integration.md#single-keycloak-hostname-requirement) for the detailed explanation and the local-dev alignment fix |
 
 ---
 

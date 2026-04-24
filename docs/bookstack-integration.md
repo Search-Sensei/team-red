@@ -15,7 +15,7 @@ For the Keycloak-side configuration that this guide depends on, see [keycloak-bo
 | Tenant isolation | None — a single shared KB visible to all logged-in users |
 | Edit permission | Only users with the `platform-admin` Keycloak realm role |
 | Entry point | A single "Knowledge Base" link in the adminui sidebar (visible to all authenticated users) |
-| Logout behaviour | Keycloak Backchannel Logout — logging out of adminui terminates the BookStack session |
+| Logout behaviour | Local BookStack logout terminates the BookStack session and ends the shared Keycloak SSO session (via BookStack's RP-initiated logout to Keycloak's `end_session_endpoint`). An Admin UI logout does **not** automatically propagate to BookStack — see "Logout behaviour — known limitation" below |
 | Data persistence (local) | Docker named volumes |
 | Deployment | Standalone container on port `6875` (local); production FQDN to be confirmed with customer |
 
@@ -26,7 +26,7 @@ For the Keycloak-side configuration that this guide depends on, see [keycloak-bo
 1. A running Keycloak instance with the realm used by OSP Search Admin.
 2. The Keycloak configuration described in [keycloak-bookstack-integration.md](./keycloak-bookstack-integration.md) is complete:
    - Realm role `platform-admin` created and assigned to platform administrators
-   - OIDC client `bookstack` created with redirect URIs, web origins, and Backchannel Logout URL configured
+   - OIDC client `bookstack` created with redirect URIs and web origins configured (Backchannel Logout URL should be left empty — see the Keycloak guide's section 2.2 for why)
    - Client secret obtained
 3. Docker / Docker Compose available on the host.
 4. (Local development only) `/etc/hosts` contains `127.0.0.1 host.docker.internal` so the browser resolves the same hostname that containers use. This ensures the OIDC `iss` claim matches across browser and container perspectives.
@@ -263,7 +263,8 @@ docker exec "$BS" curl -s \
 | Users cannot see "Create" buttons even after being assigned `platform-admin` | Role mapping not configured on the Admin role | Verify the Admin role has `external_auth_id='platform-admin'` (see "Initial Setup" → Phase 3). Confirm `OIDC_GROUPS_CLAIM=roles` |
 | All OIDC-authenticated users end up with no role (`role = NULL` in the database) | Either the `roles` claim is missing from the ID token, or BookStack's Default User Role is not set | Check the ID token contents (temporarily set `OIDC_DUMP_USER_DETAILS=true`, log in, inspect `/config/log/bookstack/laravel.log`); confirm the Keycloak User Realm Role Protocol Mapper is configured and its "Add to ID token" checkbox is on. Confirm **Settings → Customization → Default User Role = Viewer** in BookStack |
 | ID token logged by `OIDC_DUMP_USER_DETAILS` does not contain a `roles` claim | The Keycloak Protocol Mapper is missing, its Token Claim Name is wrong, or "Add to ID token" is disabled | See [keycloak-bookstack-integration.md](./keycloak-bookstack-integration.md) → Protocol Mapper section. The mapper must be a **User Realm Role** mapper on the `bookstack` client's dedicated scope with `Token Claim Name=roles`, `Multivalued=ON`, and `Add to ID token=ON` |
-| BookStack session remains active after adminui logout | Backchannel Logout not working | Confirm Keycloak has the correct Backchannel Logout URL and that BookStack's OIDC plugin supports it; otherwise fall back to Front-channel Logout |
+| BookStack session remains active after Admin UI logout | **Expected** — BookStack does not implement OIDC back-channel logout | See "Logout behaviour — known limitation" below for the full rationale and accepted mitigations |
+| User is already signed in to Admin UI but BookStack still asks them to sign in to Keycloak | Admin UI and BookStack point to Keycloak at **different hostnames**, so the browser treats them as separate origins and the Keycloak session cookie does not cross | Make both apps reach Keycloak via the **same hostname** — see "Single Keycloak hostname requirement" below |
 
 ---
 
@@ -277,8 +278,9 @@ The local development setup uses HTTP and a Docker MySQL container, which is not
 - **Disable local login** — Set `AUTH_AUTO_INITIATE=true` so all authentication goes through Keycloak.
 - **Backup policy** — Define RPO / RTO targets and implement database backups.
 - **Deployment topology** — Decide on one of: dedicated domain (`kb.company.com`), subpath on the main domain (`app.company.com/kb`, requires reverse-proxy configuration and a path-aware `APP_URL`), or subdomain (`kb.app.company.com`). This affects TLS strategy and reverse-proxy rules.
-- **Verify Backchannel Logout in production** — Confirm that BookStack's OIDC implementation actually processes Keycloak's backchannel logout requests under production HTTPS. Fall back to Front-channel Logout if not supported.
+- **Logout behaviour is intentionally one-way** — BookStack does not implement OIDC back-channel logout, so do not configure a Backchannel Logout URL on the Keycloak client. Operate on the assumption that Admin UI logout leaves the BookStack tab logged in; the Keycloak SSO session idle timeout eventually terminates it. Full rationale in "Logout behaviour — known limitation" below.
 - **Remove the local-dev OIDC patch** — The local compose file bind-mounts `docker/bookstack-patches/OidcProviderSettings.php` into the container to allow `http://` issuers. Production uses HTTPS, so this override is unnecessary and should be removed from the production compose file. See "Local development notes" below.
+- **Point the Admin UI at BookStack** — Set `AdminSettings:BookStackUrl` on the Admin UI to the production BookStack FQDN (e.g. `https://kb.company.com`). On Azure App Service this is the environment variable `AdminSettings__BookStackUrl`. The Admin UI's "Knowledge Base" sidebar link renders only when this value is non-empty — an unset value silently hides the entry point, so it is easy to miss.
 
 ---
 
@@ -305,3 +307,59 @@ volumes:
 ### Upgrading BookStack with the patch in place
 
 If BookStack is upgraded and the upstream `OidcProviderSettings.php` has changed, refresh the patched copy. See [`docker/bookstack-patches/README.md`](../docker/bookstack-patches/README.md) for the exact procedure.
+
+---
+
+## Single Keycloak hostname requirement
+
+Silent SSO between the Admin UI and BookStack depends on both apps reaching Keycloak at the **same hostname**. The browser scopes Keycloak's session cookie to a single origin (scheme + host + port), so two applications that point at `http://localhost:8080` and `http://host.docker.internal:8080` — even if those resolve to the same Keycloak instance — see separate cookie jars. Symptom: after signing in to the Admin UI, opening the Knowledge Base link re-prompts for the Keycloak password.
+
+**Production.** Not an issue in practice, because Keycloak is published under a single FQDN (e.g. `https://login.company.com`) and every client — Admin UI, BookStack, any future portal — points to that same FQDN. Guidance:
+
+- Configure Admin UI's `KeycloakAuthentication:Authority` and BookStack's `OIDC_ISSUER` to use the identical Keycloak FQDN, including protocol and port.
+- Avoid split-horizon schemes where server-to-server calls use `keycloak.internal` while the browser uses `login.company.com`. The browser flow and the server-to-server flow must share one hostname. If internal routing optimisation is required, use split-horizon **DNS** (same name, different IPs from different networks) rather than two different names.
+
+**Local development.** This is the one place where the problem commonly surfaces, because BookStack (in a container) must reach Keycloak via `host.docker.internal` while the Admin UI (on the host) defaults to `localhost`. Fix by aligning the Admin UI's Keycloak config with BookStack's:
+
+```jsonc
+// appsettings.development.json
+"KeycloakAuthentication": {
+  "Authority": "http://host.docker.internal:8080/realms/osp-dev",
+  "BaseUrl":   "http://host.docker.internal:8080"
+}
+```
+
+Restart the Admin UI after this change and clear Keycloak cookies from both `localhost` and `host.docker.internal` in the browser (or use a fresh incognito window), because the stale cookie on `localhost:8080` will otherwise keep interfering. The Admin UI itself can still be accessed at `http://localhost:5000/adminui` — only its Keycloak endpoint changes.
+
+---
+
+## Logout behaviour — known limitation
+
+Logout does **not** propagate automatically from the Admin UI to BookStack. This is a BookStack limitation, independently verified against the current release, and is the reason the Keycloak client is configured **without** a Backchannel Logout URL.
+
+### What does work
+
+- **BookStack logout → Keycloak logout.** BookStack's `/oidc/logout` (browser-initiated) redirects to Keycloak's `end_session_endpoint` because `OIDC_END_SESSION_ENDPOINT=true`. This terminates both the BookStack session and the shared Keycloak SSO session. Signing in to the Admin UI afterwards requires re-authentication.
+
+### What does not work
+
+- **Admin UI logout → BookStack logout.** When a user logs out of the Admin UI, the Admin UI calls Keycloak's `end_session_endpoint` and the Keycloak SSO session is terminated. However, the BookStack tab remains logged in: BookStack's local session cookie is untouched, and the user can continue reading and (if they have Admin role) editing until either the BookStack session times out or they explicitly log out of BookStack.
+
+### Why back-channel logout cannot be made to work here
+
+BookStack's OIDC plugin (as shipped in the current LinuxServer image) does not implement the [OIDC Back-Channel Logout spec](https://openid.net/specs/openid-connect-backchannel-1_0.html):
+
+1. The endpoint that Keycloak would POST the logout notification to (`/oidc/logout`) is a browser-only Laravel route protected by CSRF middleware. A POST without a CSRF token is rejected with HTTP 419 before any application logic runs.
+2. Even if CSRF were bypassed, the route does not parse the `logout_token` JWT or terminate sessions indexed by `sid` — it only ends the session of the browser making the request. Keycloak's server-to-server call is not a BookStack user agent, so there is no session to terminate.
+
+Configuring Keycloak with a Backchannel Logout URL causes every Keycloak logout to fire an HTTP 419 against BookStack with no effect, adding only log noise. The URL should therefore remain empty.
+
+### Accepted mitigations
+
+- **Rely on the Keycloak SSO session idle timeout.** Once the Keycloak SSO session expires (default 30 minutes idle), the user's next protected action in BookStack triggers a re-authentication; Keycloak no longer has a session and will prompt for credentials.
+- **User-initiated BookStack logout.** The "Log out" action inside BookStack works correctly and cascades to a Keycloak logout (see "What does work" above).
+- **Closing the browser tab / window** is sufficient for most workflows — the BookStack session is bound to a browser cookie that goes away when the tab is closed if the session was configured with a short lifetime; the user will need to re-authenticate on next visit.
+
+### Future work (not in scope)
+
+Adding true cross-application logout would require either forking BookStack to introduce a dedicated back-channel logout endpoint that handles `logout_token` JWTs, or running a small purpose-built bridge service that accepts the logout notification from Keycloak and invalidates BookStack's session directly in the database. Neither is planned for this integration.
