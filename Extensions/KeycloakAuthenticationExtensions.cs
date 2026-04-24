@@ -15,6 +15,7 @@ using Microsoft.Extensions.Logging;
 using S365.Search.Admin.UI.Models;
 using S365.Search.Admin.UI.Services;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace S365.Search.Admin.UI.Extensions
 {
@@ -53,6 +54,7 @@ namespace S365.Search.Admin.UI.Extensions
                 options.LogoutPath = "/logout";
                 options.ExpireTimeSpan = TimeSpan.FromHours(8);
                 options.SlidingExpiration = true;
+                options.SessionStore = new SessionStore();
             })
             .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
             {
@@ -246,5 +248,65 @@ namespace S365.Search.Admin.UI.Extensions
             return services;
         }
 
+    }
+
+    // This is a local cookie session store
+    // Storing Cookies to simplify cookies header.
+    // In real production, should be hooked to a Redis
+    // TODO: Replace with a Redis-backed IDistributedCache before going to production or scaling out.
+    // Current in-memory store loses all sessions on app restart and does not sync across instances,
+    // which will manifest as forced re-logins after every deploy and apparent random logouts under load balancing.
+    internal class SessionStore : ITicketStore
+    {
+        private ConcurrentDictionary<string, AuthenticationTicket> mytickets = new();
+
+        public SessionStore()
+        {
+        }
+
+        public Task RemoveAsync(string key)
+        {
+            if (mytickets.ContainsKey(key))
+            {
+                mytickets.TryRemove(key, out _);
+            }
+
+            return Task.FromResult(0);
+        }
+
+        public Task RenewAsync(string key, AuthenticationTicket ticket)
+        {
+            mytickets[key] = ticket;
+
+            return Task.FromResult(false);
+        }
+
+        public Task<AuthenticationTicket> RetrieveAsync(string key)
+        {
+            if (mytickets.ContainsKey(key))
+            {
+                var ticket = mytickets[key];
+                return Task.FromResult(ticket);
+            }
+            else
+            {
+                return Task.FromResult((AuthenticationTicket)null!);
+            }
+        }
+
+        public Task<string> StoreAsync(AuthenticationTicket ticket)
+        {
+            var key = Guid.NewGuid().ToString();
+            var result = mytickets.TryAdd(key, ticket);
+
+            if (result)
+            {
+                return Task.FromResult(key);
+            }
+            else
+            {
+                throw new Exception("Failed to add entry to the MySessionStore.");
+            }
+        }
     }
 }
