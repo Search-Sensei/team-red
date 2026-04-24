@@ -4,7 +4,6 @@ import { IAdminSettingsState } from "../../store/models/adminsettingsstate.inter
 import { IAccount } from "../../store/models/account.interface";
 import { useSelector } from "react-redux";
 import { IStateType } from "../../store/models/root.interface";
-import SupportMenu from "./SupportMenu";
 
 interface ShowAdminSidebar {
   featuredContent: IsEnabled;
@@ -242,7 +241,19 @@ const LeftMenu: React.FC = () => {
           </li>
         )}
 
-        <SupportMenu />
+        {adminSettingsState.adminSettings.bookStackUrl && (
+          <li className="nav-item">
+            <a
+              className="nav-link"
+              href={adminSettingsState.adminSettings.bookStackUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <i className="fas fa-fw fa-book"></i>
+              <span>Knowledge Base</span>
+            </a>
+          </li>
+        )}
 
         <hr className="sidebar-divider d-none d-md-block" />
       </ul>

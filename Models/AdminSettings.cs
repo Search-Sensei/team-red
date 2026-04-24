@@ -60,6 +60,7 @@ namespace S365.Search.Admin.UI.Models
         public bool UserPermissionEnabled { get; set; }
 
         public bool NavigationSettingEnabled { get; set; }
+        public string BookStackUrl { get; set; }
         public string PublicKey { get; set; }
         public string PrivateKey { get; set; }
         public string ThumbPrint { get; set; }

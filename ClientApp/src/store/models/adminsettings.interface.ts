@@ -74,6 +74,8 @@ export interface IAdminSettings {
 
     accessibilityNavigationEnabled: any;
 
+    bookStackUrl: string;
+
     searchSettings: SearchSetting;
 }
 
