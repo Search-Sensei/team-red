@@ -192,10 +192,3 @@ The production deployment topology (dedicated domain, subpath, or subdomain) sho
 | BookStack session remains active after adminui logout | **Expected** — BookStack does not implement OIDC back-channel logout, so a Keycloak-initiated logout does not propagate to BookStack | Leave Keycloak's Backchannel Logout URL empty (see section 2.2). Full rationale and mitigations documented in [bookstack-integration.md](./bookstack-integration.md#logout-behaviour-known-limitation) |
 | Admin UI user is already signed in to Keycloak but BookStack prompts them to sign in again | Admin UI and BookStack point to Keycloak at **different hostnames**, so the browser's Keycloak session cookie is scoped to one origin and does not apply to the other | All applications sharing this Keycloak realm must use the identical Keycloak hostname, port and scheme in their OIDC configuration. See [bookstack-integration.md](./bookstack-integration.md#single-keycloak-hostname-requirement) for the detailed explanation and the local-dev alignment fix |
 
----
-
-## References
-
-- Keycloak OIDC client configuration: https://www.keycloak.org/docs/latest/server_admin/#_oidc_clients
-- Keycloak Backchannel Logout: https://www.keycloak.org/docs/latest/server_admin/#_oidc-logout
-- BookStack OIDC documentation: https://www.bookstackapp.com/docs/admin/oidc-auth/
