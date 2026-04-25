@@ -15,7 +15,7 @@ For the Keycloak-side configuration that this guide depends on, see [keycloak-bo
 | Tenant isolation | None — a single shared KB visible to all logged-in users |
 | Edit permission | Only users with the `platform-admin` Keycloak realm role |
 | Entry point | A single "Knowledge Base" link in the adminui sidebar (visible to all authenticated users) |
-| Logout behaviour | Local BookStack logout terminates the BookStack session and ends the shared Keycloak SSO session (via BookStack's RP-initiated logout to Keycloak's `end_session_endpoint`). An Admin UI logout does **not** automatically propagate to BookStack — see "Logout behaviour — known limitation" below |
+| Logout behaviour | Each application manages its own session independently. Neither an Admin UI logout nor a BookStack logout terminates the other application's local session — see "Logout behaviour — known limitation" below |
 | Data persistence (local) | Docker named volumes |
 | Deployment | Standalone container on port `6875` (local); production FQDN to be confirmed with customer |
 
@@ -98,7 +98,7 @@ configs:
       OIDC_CLIENT_SECRET=<bookstack-client-secret>
       OIDC_ISSUER=http://host.docker.internal:8080/realms/<realm>
       OIDC_ISSUER_DISCOVER=true
-      OIDC_END_SESSION_ENDPOINT=true
+      OIDC_END_SESSION_ENDPOINT=false
 
       # --- Role sync: Keycloak realm role -> BookStack role ---
       OIDC_USER_TO_GROUPS=true
@@ -139,7 +139,7 @@ Because `AUTH_METHOD=oidc` disables BookStack's local login form, the initial bo
 | `OIDC_CLIENT_SECRET` | *(from Keycloak)* | Store in a secret manager; never commit to git |
 | `OIDC_ISSUER` | `http://host.docker.internal:8080/realms/<realm>` | Must exactly match Keycloak's `iss` claim |
 | `OIDC_ISSUER_DISCOVER` | `true` | Auto-discover OIDC endpoints from `/.well-known/openid-configuration` |
-| `OIDC_END_SESSION_ENDPOINT` | `true` | Logging out of BookStack also logs out of Keycloak |
+| `OIDC_END_SESSION_ENDPOINT` | `false` | Intentionally **disabled**. Setting this to `true` makes a BookStack logout also terminate the Keycloak SSO session, which then forces the Admin UI user to re-authenticate on their next protected action — undesirable because BookStack is a secondary surface and its logout should not cascade to the primary app. See "Logout behaviour — known limitation" below |
 | `OIDC_USER_TO_GROUPS` | `true` | Enable role synchronisation from the ID token |
 | `OIDC_GROUPS_CLAIM` | `roles` | Top-level claim emitted by the Keycloak **User Realm Role** Protocol Mapper. See [keycloak-bookstack-integration.md](./keycloak-bookstack-integration.md) — the mapper is required; Keycloak does not put realm roles in the ID token by default |
 | `OIDC_REMOVE_FROM_GROUPS` | `true` | Revoking a role in Keycloak demotes the user on next login. Works together with a BookStack **Default User Role** of Viewer so users never end up with no role |
@@ -335,31 +335,56 @@ Restart the Admin UI after this change and clear Keycloak cookies from both `loc
 
 ## Logout behaviour — known limitation
 
-Logout does **not** propagate automatically from the Admin UI to BookStack. This is a BookStack limitation, independently verified against the current release, and is the reason the Keycloak client is configured **without** a Backchannel Logout URL.
+BookStack manages its own session independently of the Keycloak OpenID Provider. Neither an Admin UI logout nor a BookStack logout automatically terminates the other application's session. This is a known BookStack design decision (documented upstream), not a misconfiguration of this integration.
 
-### What does work
+From the BookStack OIDC documentation: _"Once a user successfully logs into BookStack, their session becomes largely independent from the session at the OpenID Provider."_
 
-- **BookStack logout → Keycloak logout.** BookStack's `/oidc/logout` (browser-initiated) redirects to Keycloak's `end_session_endpoint` because `OIDC_END_SESSION_ENDPOINT=true`. This terminates both the BookStack session and the shared Keycloak SSO session. Signing in to the Admin UI afterwards requires re-authentication.
+### What happens on each action
 
-### What does not work
+| Action | BookStack session | Admin UI session | Keycloak SSO session |
+|---|---|---|---|
+| Admin UI logout | **unchanged** (stays logged in) | cleared | cleared |
+| BookStack logout (button inside BookStack) | cleared | unchanged (stays logged in) | **unchanged** (because `OIDC_END_SESSION_ENDPOINT=false`) |
+| Browser tab closed | depends on session cookie lifetime | depends on session cookie lifetime | unchanged |
+| Keycloak SSO idle timeout expires | unchanged locally, but any new OIDC flow BookStack initiates will require re-login | unchanged locally | cleared |
 
-- **Admin UI logout → BookStack logout.** When a user logs out of the Admin UI, the Admin UI calls Keycloak's `end_session_endpoint` and the Keycloak SSO session is terminated. However, the BookStack tab remains logged in: BookStack's local session cookie is untouched, and the user can continue reading and (if they have Admin role) editing until either the BookStack session times out or they explicitly log out of BookStack.
+The `OIDC_END_SESSION_ENDPOINT=false` setting is deliberate. Setting it to `true` would cause a BookStack logout to cascade through Keycloak's `end_session_endpoint` and kill the shared SSO session — which would in turn force the Admin UI user to re-authenticate on their next protected action. Because BookStack is a secondary surface accessed through the Admin UI, its logout must not disrupt the primary app.
 
 ### Why back-channel logout cannot be made to work here
 
-BookStack's OIDC plugin (as shipped in the current LinuxServer image) does not implement the [OIDC Back-Channel Logout spec](https://openid.net/specs/openid-connect-backchannel-1_0.html):
+BookStack's OIDC plugin (as shipped in the current LinuxServer image) does not implement the [OIDC Back-Channel Logout spec](https://openid.net/specs/openid-connect-backchannel-1_0.html). We verified this end-to-end:
 
-1. The endpoint that Keycloak would POST the logout notification to (`/oidc/logout`) is a browser-only Laravel route protected by CSRF middleware. A POST without a CSRF token is rejected with HTTP 419 before any application logic runs.
-2. Even if CSRF were bypassed, the route does not parse the `logout_token` JWT or terminate sessions indexed by `sid` — it only ends the session of the browser making the request. Keycloak's server-to-server call is not a BookStack user agent, so there is no session to terminate.
+1. Keycloak **does** fire a POST to the configured Backchannel Logout URL when the SSO session is terminated — confirmed in BookStack's nginx access log with User-Agent `Apache-HttpClient/...` (Keycloak's Java HTTP client).
+2. BookStack's `/oidc/logout` endpoint is a browser-only Laravel route protected by CSRF middleware. The POST from Keycloak has no CSRF token, so Laravel returns HTTP 419 (`TokenMismatchException`) before any application logic runs.
+3. Even if CSRF were bypassed, the route does not parse the `logout_token` JWT or terminate sessions indexed by `sid`. It only ends the session of the browser making the request; Keycloak's server-to-server call has no such session to end.
 
-Configuring Keycloak with a Backchannel Logout URL causes every Keycloak logout to fire an HTTP 419 against BookStack with no effect, adding only log noise. The URL should therefore remain empty.
+Upstream tracking: [BookStackApp/BookStack#5279 — Implement OIDC Front-Channel / Back-Channel Logout](https://github.com/BookStackApp/BookStack/issues/5279) was closed in March 2025 without a change to BookStack core; the closing comment links to an [external gist](https://gist.github.com/timhallmann/464fad847c6e9e4a401f847639095faf) that implements the feature by patching BookStack's database session handling directly. Adopting that patch would mean maintaining a fork and is out of scope for this integration.
 
-### Accepted mitigations
+Configuring Keycloak with a Backchannel Logout URL produces nothing but HTTP 419 log noise. The URL should therefore remain empty on the `bookstack` client.
 
-- **Rely on the Keycloak SSO session idle timeout.** Once the Keycloak SSO session expires (default 30 minutes idle), the user's next protected action in BookStack triggers a re-authentication; Keycloak no longer has a session and will prompt for credentials.
-- **User-initiated BookStack logout.** The "Log out" action inside BookStack works correctly and cascades to a Keycloak logout (see "What does work" above).
-- **Closing the browser tab / window** is sufficient for most workflows — the BookStack session is bound to a browser cookie that goes away when the tab is closed if the session was configured with a short lifetime; the user will need to re-authenticate on next visit.
+### Switching between accounts in the same browser
+
+Because the BookStack session cookie survives an Admin UI logout, logging a different Keycloak account into the Admin UI and then opening the Knowledge Base link will display **the previous user's** BookStack view — BookStack recognises its own cookie and does not re-consult Keycloak. Same root cause as the logout limitation above.
+
+This is mostly a developer / QA concern; in production, one person typically uses one browser profile, so the situation rarely arises. When it does, any of the following restores a clean state:
+
+- Open the Admin UI in a fresh **incognito / private window** for the new account (zero setup, recommended for testing).
+- Click **Log out** inside BookStack before switching accounts in the Admin UI. The BookStack session cookie is cleared; the next Knowledge Base click establishes a fresh session for the new user.
+- Clear `host.docker.internal:6875` cookies from the browser manually.
+
+The BookStack community issue tracker acknowledges the same workflow: users needing to switch OIDC accounts must log out of BookStack manually or clear cookies (see [BookStackApp/BookStack#4401](https://github.com/BookStackApp/BookStack/issues/4401)).
+
+### Accepted mitigations for logout
+
+- **Rely on the Keycloak SSO session idle timeout.** Once the Keycloak SSO session expires (default 30 minutes idle), any new OIDC flow from BookStack requires re-authentication.
+- **User-initiated BookStack logout** (button inside BookStack) — clears the BookStack local session. Does not affect the Admin UI or Keycloak (intentional, per the table above).
+- **Closing the browser** — if the BookStack session cookie is browser-scoped (default), the session disappears with the browser process.
 
 ### Future work (not in scope)
 
-Adding true cross-application logout would require either forking BookStack to introduce a dedicated back-channel logout endpoint that handles `logout_token` JWTs, or running a small purpose-built bridge service that accepts the logout notification from Keycloak and invalidates BookStack's session directly in the database. Neither is planned for this integration.
+Adding true cross-application logout would require one of:
+- Forking BookStack to implement [OIDC Back-Channel Logout spec](https://openid.net/specs/openid-connect-backchannel-1_0.html) properly ([upstream issue](https://github.com/BookStackApp/BookStack/issues/5279)), which also depends on BookStack implementing OIDC session handling ([upstream issue](https://github.com/BookStackApp/BookStack/issues/5278)).
+- Adopting the community gist patch and maintaining it alongside BookStack upgrades.
+- Running a small bridge service that receives Keycloak logout notifications and invalidates BookStack's session directly in its database.
+
+None of these are planned for this integration.

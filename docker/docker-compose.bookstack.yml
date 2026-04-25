@@ -54,7 +54,7 @@ configs:
       OIDC_ISSUER=http://host.docker.internal:8080/realms/osp-dev
       
       OIDC_ISSUER_DISCOVER=true
-      OIDC_END_SESSION_ENDPOINT=true
+      OIDC_END_SESSION_ENDPOINT=false
 
       # --- Role sync: Keycloak realm role -> BookStack role ---
       OIDC_USER_TO_GROUPS=true
