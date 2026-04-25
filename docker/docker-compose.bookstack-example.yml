@@ -1,0 +1,86 @@
+# Example BookStack stack for local development.
+#
+# Usage:
+#   1. Copy this file to docker/docker-compose.bookstack.yml
+#   2. Replace every <placeholder> in `configs.bookstack_env.content` below
+#   3. Start the stack:  docker compose -f docker/docker-compose.bookstack.yml up -d
+#
+# Full walkthrough: docs/bookstack-integration.md
+
+services:
+  bookstack:
+    image: lscr.io/linuxserver/bookstack:latest
+    ports:
+      - "6875:80"
+    depends_on:
+      bookstack-db:
+        condition: service_healthy
+    volumes:
+      - bookstack_data:/config
+      # Local-dev only. REMOVE this volume mount in production
+      # (see docs/bookstack-integration.md → "Local-dev patches").
+      - ./bookstack-patches/OidcProviderSettings.php:/app/www/app/Access/Oidc/OidcProviderSettings.php:ro
+    configs:
+      - source: bookstack_env
+        target: /config/www/.env
+
+  bookstack-db:
+    image: mysql:8.0
+    environment:
+      # Dev-only credentials. Replace with a managed database in production.
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=bookstack
+      - MYSQL_USER=bookstack
+      - MYSQL_PASSWORD=bookstack
+    volumes:
+      - bookstack_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "bookstack", "-pbookstack"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+configs:
+  bookstack_env:
+    content: |
+      # Generate once with:
+      #   docker run --rm lscr.io/linuxserver/bookstack:latest php artisan key:generate --show
+      # Paste the entire `base64:...=` line below. Keep it stable across restarts —
+      # rotating APP_KEY invalidates BookStack's encrypted data.
+      APP_KEY=base64:<paste-generated-app-key>
+
+      # BookStack public URL. Local dev keeps host.docker.internal; production uses an FQDN.
+      APP_URL=http://host.docker.internal:6875
+
+      DB_HOST=bookstack-db
+      DB_DATABASE=bookstack
+      DB_USERNAME=bookstack
+      DB_PASSWORD=bookstack
+
+      # ---- Keycloak OIDC ----
+      AUTH_METHOD=oidc
+      AUTH_AUTO_INITIATE=true
+      OIDC_NAME=Keycloak
+      OIDC_DISPLAY_NAME_CLAIMS=name
+      OIDC_CLIENT_ID=bookstack
+
+      # Copy from Keycloak admin console: Clients → bookstack → Credentials → Client Secret.
+      OIDC_CLIENT_SECRET=<paste-bookstack-client-secret-from-keycloak>
+
+      # Your Keycloak realm URL. Must exactly match the `iss` claim Keycloak emits in tokens.
+      # Local dev:  http://host.docker.internal:8080/realms/<your-realm>
+      # Production: https://login.company.com/realms/<your-realm>
+      OIDC_ISSUER=http://host.docker.internal:8080/realms/<your-realm>
+
+      OIDC_ISSUER_DISCOVER=true
+      OIDC_END_SESSION_ENDPOINT=false
+
+      # ---- Role sync: Keycloak realm role → BookStack role ----
+      OIDC_USER_TO_GROUPS=true
+      OIDC_GROUPS_CLAIM=roles
+      OIDC_REMOVE_FROM_GROUPS=true
+
+volumes:
+  bookstack_data:
+  bookstack_db_data:
