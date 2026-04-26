@@ -64,3 +64,5 @@ global.json
 .idea/
 *.swp
 *.swo
+
+docker-compose.bookstack.yml
