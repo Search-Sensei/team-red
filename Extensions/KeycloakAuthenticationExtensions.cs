@@ -73,6 +73,14 @@ namespace S365.Search.Admin.UI.Extensions
                 options.RequireHttpsMetadata = keycloakConfig.GetValue<bool>("RequireHttpsMetadata");
                 options.UsePkce = keycloakConfig.GetValue<bool>("UsePkce");
 
+                // Fix "Correlation failed" — the redirect back from Keycloak is treated as
+                // cross-site by the browser, so correlation/nonce cookies must use SameSite=None.
+                // SecurePolicy=SameAsRequest allows HTTP in development without breaking HTTPS in prod.
+                options.CorrelationCookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+                options.CorrelationCookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+                options.NonceCookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+                options.NonceCookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+
                 // Allow HTTP Keycloak in production temporarily
                 options.BackchannelHttpHandler = new HttpClientHandler()
                 {

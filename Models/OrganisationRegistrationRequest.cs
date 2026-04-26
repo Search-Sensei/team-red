@@ -24,5 +24,10 @@ namespace S365.Search.Admin.UI.Models
 
         [Required(ErrorMessage = "Organisation URL is required.")]
         public string OrganisationUrl { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Please select a subscription plan.")]
+        [RegularExpression("^(essentials_monthly|essentials_annual|ai_search_monthly|ai_search_annual)$",
+            ErrorMessage = "Invalid plan selected.")]
+        public string PlanId { get; set; } = string.Empty;
     }
 }

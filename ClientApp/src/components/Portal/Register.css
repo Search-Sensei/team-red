@@ -109,6 +109,12 @@
     color: #155724;
 }
 
+.ss-alert-warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+}
+
 /* Form */
 .ss-form {
     display: flex;
@@ -149,8 +155,28 @@
     box-shadow: 0 0 0 0.2rem rgba(0, 198, 182, 0.25);
 }
 
-.ss-form-group input.ss-input-error {
+.ss-form-group input.ss-input-error,
+.ss-select.ss-input-error {
     border-color: #e74a3b;
+}
+
+/* Plan selector */
+.ss-select {
+    padding: 0.6rem 0.85rem;
+    font-size: 0.95rem;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0.35rem;
+    background-color: #ffffff;
+    color: darkslategray;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+    width: 100%;
+    cursor: pointer;
+}
+
+.ss-select:focus {
+    border-color: #00c6b6;
+    box-shadow: 0 0 0 0.2rem rgba(0, 198, 182, 0.25);
 }
 
 .ss-field-error {

@@ -65,4 +65,9 @@ global.json
 *.swp
 *.swo
 
+<<<<<<< HEAD
 docker-compose.bookstack.yml
+=======
+## Local Stripe setup
+stripe.tar.gz
+>>>>>>> 619e649 (Stripe Setup and Payment Confirmation Logic.)

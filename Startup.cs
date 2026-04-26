@@ -71,6 +71,7 @@ namespace S365.Search.Admin.UI
 
             services.AddHttpClient<KeycloakService>();
             services.AddScoped<KeycloakService>();
+            services.AddScoped<StripeService>();
             services.AddHostedService<InviteCleanupService>();
             services.AddScoped<IProxyAuthenticationService, ProxyAuthenticationService>();
             services.AddScoped<IAnalyticsProxyService, AnalyticsProxyService>();

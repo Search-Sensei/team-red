@@ -8,18 +8,18 @@ using Microsoft.Extensions.Logging;
 namespace S365.Search.Admin.UI.Services
 {
     /// <summary>
-    /// Background service that runs hourly and deletes Keycloak users who were created
-    /// via the invite flow (identified by the "invitedAt" user attribute) but never
-    /// accepted the invitation within 24 hours. This keeps Keycloak clean — only fully
-    /// activated users remain in the system.
+    /// Background service that runs hourly and:
+    /// 1. Deletes Keycloak users invited via the invite flow who never accepted within 24 hours.
+    /// 2. Deletes Keycloak users and orgs created during registration who never completed payment within 24 hours.
     /// </summary>
     public class InviteCleanupService : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<InviteCleanupService> _logger;
 
-        private static readonly TimeSpan RunInterval  = TimeSpan.FromHours(1);
-        private static readonly TimeSpan InviteExpiry = TimeSpan.FromHours(24);
+        private static readonly TimeSpan RunInterval   = TimeSpan.FromMinutes(1);
+        private static readonly TimeSpan InviteExpiry  = TimeSpan.FromMinutes(2);
+        private static readonly TimeSpan PaymentExpiry = TimeSpan.FromMinutes(2);
 
         public InviteCleanupService(IServiceScopeFactory scopeFactory, ILogger<InviteCleanupService> logger)
         {
@@ -36,6 +36,7 @@ namespace S365.Search.Admin.UI.Services
             while (await timer.WaitForNextTickAsync(stoppingToken))
             {
                 await CleanupExpiredInvitesAsync(stoppingToken);
+                await CleanupExpiredPendingPaymentsAsync(stoppingToken);
             }
         }
 
@@ -45,7 +46,6 @@ namespace S365.Search.Admin.UI.Services
 
             try
             {
-                // KeycloakService is scoped — create a fresh scope for each run
                 await using var scope = _scopeFactory.CreateAsyncScope();
                 var keycloak = scope.ServiceProvider.GetRequiredService<KeycloakService>();
 
@@ -63,8 +63,7 @@ namespace S365.Search.Admin.UI.Services
 
                 foreach (var userId in expiredIds)
                 {
-                    if (cancellationToken.IsCancellationRequested)
-                        break;
+                    if (cancellationToken.IsCancellationRequested) break;
 
                     try
                     {
@@ -74,7 +73,6 @@ namespace S365.Search.Admin.UI.Services
                     }
                     catch (Exception ex)
                     {
-                        // Log and continue — a failed delete will be retried next hour
                         _logger.LogWarning(ex,
                             "InviteCleanupService: failed to delete user {UserId}, will retry next cycle.", userId);
                     }
@@ -82,7 +80,59 @@ namespace S365.Search.Admin.UI.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "InviteCleanupService: unexpected error during cleanup run.");
+                _logger.LogError(ex, "InviteCleanupService: unexpected error during invite cleanup.");
+            }
+        }
+
+        private async Task CleanupExpiredPendingPaymentsAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("InviteCleanupService: scanning for expired pending-payment registrations.");
+
+            try
+            {
+                await using var scope = _scopeFactory.CreateAsyncScope();
+                var keycloak = scope.ServiceProvider.GetRequiredService<KeycloakService>();
+
+                var adminToken = await keycloak.GetAdminTokenAsync();
+                var expired    = await keycloak.GetExpiredPendingPaymentUsersAsync(adminToken, PaymentExpiry);
+
+                if (expired.Count == 0)
+                {
+                    _logger.LogInformation("InviteCleanupService: no expired pending-payment registrations found.");
+                    return;
+                }
+
+                _logger.LogInformation(
+                    "InviteCleanupService: cleaning up {Count} expired pending-payment registration(s).", expired.Count);
+
+                foreach (var (userId, orgId) in expired)
+                {
+                    if (cancellationToken.IsCancellationRequested) break;
+
+                    try
+                    {
+                        await keycloak.DeleteUserAsync(adminToken, userId);
+                        _logger.LogInformation(
+                            "InviteCleanupService: deleted pending-payment user {UserId}.", userId);
+
+                        if (!string.IsNullOrEmpty(orgId))
+                        {
+                            await keycloak.DeleteOrganizationAsync(adminToken, orgId);
+                            _logger.LogInformation(
+                                "InviteCleanupService: deleted pending-payment org {OrgId}.", orgId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex,
+                            "InviteCleanupService: failed to delete pending-payment user {UserId} / org {OrgId}, will retry.",
+                            userId, orgId);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "InviteCleanupService: unexpected error during pending-payment cleanup.");
             }
         }
     }
