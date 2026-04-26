@@ -17,9 +17,9 @@ namespace S365.Search.Admin.UI.Services
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<InviteCleanupService> _logger;
 
-        private static readonly TimeSpan RunInterval   = TimeSpan.FromMinutes(1);
-        private static readonly TimeSpan InviteExpiry  = TimeSpan.FromMinutes(2);
-        private static readonly TimeSpan PaymentExpiry = TimeSpan.FromMinutes(2);
+        private static readonly TimeSpan RunInterval   = TimeSpan.FromHours(1);
+        private static readonly TimeSpan InviteExpiry  = TimeSpan.FromHours(24);
+        private static readonly TimeSpan PaymentExpiry = TimeSpan.FromHours(24);
 
         public InviteCleanupService(IServiceScopeFactory scopeFactory, ILogger<InviteCleanupService> logger)
         {
