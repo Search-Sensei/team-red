@@ -1,0 +1,327 @@
+<script>
+/* Redirect users from the BookStack home/books page to the main KB landing page */
+document.addEventListener("DOMContentLoaded", function () {
+  const target = "/books/documentation/page/introduction-or-getting-started";
+
+  if (window.location.pathname === "/" || window.location.pathname === "/books") {
+    window.location.href = target;
+  }
+});
+</script>
+
+<style>
+/* =====================================================
+   1. BASE THEME
+   ===================================================== */
+html,
+body {
+  --color-primary: #00c6b6 !important;
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+}
+
+/* =====================================================
+   2. HEADER / NAVBAR
+   ===================================================== */
+header#header.primary-background,
+#header.primary-background,
+body > header#header {
+  background: linear-gradient(180deg, #1d5d66 10%, #00c6b6) !important;
+  background-color: #00c6b6 !important;
+}
+
+#header nav,
+#header nav a,
+#header nav span,
+#header nav svg,
+#header nav button,
+#header .header-links,
+#header .header-links a,
+#header .header-links span,
+#header .header-links svg,
+#header .header-links button {
+  color: #ffffff !important;
+}
+
+/* Hide top header search safely */
+#header-search-box-input,
+#header-search-box-button {
+  display: none !important;
+}
+
+#header .search-box {
+  pointer-events: none;
+}
+
+/* =====================================================
+   3. MAIN LAYOUT
+   ===================================================== */
+.container,
+.tri-layout-content {
+  background: transparent !important;
+}
+
+.tri-layout-container {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+.tri-layout-middle {
+  max-width: 100% !important;
+  margin-left: 0 !important;
+}
+
+/* =====================================================
+   4. TYPOGRAPHY / TEXT
+   ===================================================== */
+h1,
+h2,
+h3,
+h4 {
+  color: #111827 !important;
+}
+
+a {
+  color: #1f2937 !important;
+  text-decoration: none !important;
+}
+
+a:hover {
+  color: #00b3a4 !important;
+}
+
+.text-muted {
+  color: #6b7280 !important;
+}
+
+/* Breadcrumbs */
+.breadcrumbs a,
+.breadcrumbs span {
+  color: #374151 !important;
+  font-weight: 500 !important;
+}
+
+.breadcrumbs a:hover {
+  color: #00b3a4 !important;
+}
+
+.breadcrumbs svg {
+  opacity: 0.7 !important;
+}
+
+/* =====================================================
+   5. CARDS / CONTENT BLOCKS
+   ===================================================== */
+.card,
+.grid-card,
+.entity-list-item {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+}
+
+.entity-list-item .cover {
+  background-color: #d1d5db !important;
+}
+
+/* =====================================================
+   6. LEFT SIDEBAR / BOOK NAVIGATION
+   ===================================================== */
+.tri-layout-left,
+.tri-layout-left-contents,
+#sidebar,
+#sidebar .tri-layout-left-contents {
+  background-color: #1d5d66 !important;
+  border-right: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  min-height: calc(100vh - 68px) !important;
+}
+
+.tri-layout-left,
+.tri-layout-left * {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+.tri-layout-left-contents {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.tri-layout-left a,
+.tri-layout-left .list-item,
+.tri-layout-left .card,
+.tri-layout-left .entity-list-item,
+.tri-layout-left ul,
+.tri-layout-left li,
+.tri-layout-left .book-tree {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.tri-layout-left a:hover,
+.tri-layout-left .list-item:hover {
+  background: rgba(255,255,255,0.15) !important;
+  border-radius: 8px !important;
+}
+
+.tri-layout-left .selected,
+.tri-layout-left .active,
+.tri-layout-left li.selected,
+.tri-layout-left a.selected,
+.tri-layout-left .list-item.selected,
+.tri-layout-left .book-tree .selected {
+  background: rgba(255,255,255,0.18) !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+}
+
+
+/* Fix nested chapter/page text */
+.tri-layout-left .chapter-child-menu,
+.tri-layout-left .chapter-child-menu *,
+.tri-layout-left .chapter-contents-list,
+.tri-layout-left .chapter-contents-list * {
+  color: #ffffff !important;
+}
+
+.tri-layout-left .chapter-child-menu a {
+  color: rgba(255,255,255,0.85) !important;
+}
+
+.tri-layout-left .chapter-child-menu a:hover {
+  color: #ffffff !important;
+}
+
+/* Hide sidebar search */
+#sidebar form.search-box,
+#sidebar input[name="term"],
+#sidebar button[type="submit"] {
+  display: none !important;
+}
+
+/* =====================================================
+   7. HIDE UNWANTED BOOKSTACK SECTIONS
+   ===================================================== */
+#details,
+#recently-updated-pages,
+#recent-activity,
+#sidebar .mb-xl:nth-of-type(2),
+.comments-container,
+#comments,
+.comment-box,
+.comment-thread,
+.dark-mode-toggle,
+button[title*="Dark"],
+a[href*="dark"],
+form[action*="dark-mode"] {
+  display: none !important;
+}
+
+/* Hide right Details only, keep Actions */
+.tri-layout-right-contents > .mb-xl:first-child {
+  display: none !important;
+}
+
+/* =====================================================
+   8. NORMAL USER VIEW ONLY
+   Admin is detected by the Settings link.
+   Normal users do not see Settings.
+   ===================================================== */
+body:not(:has(nav.header-links a[href*="/settings"])) nav.header-links a[href$="/shelves"],
+body:not(:has(nav.header-links a[href*="/settings"])) nav.header-links a[href$="/books"] {
+  display: none !important;
+}
+
+body:not(:has(nav.header-links a[href*="/settings"])) .tri-layout-right {
+  display: none !important;
+}
+
+body:not(:has(nav.header-links a[href*="/settings"])) .tri-layout-middle {
+  grid-column: 2 / 4 !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+body:not(:has(nav.header-links a[href*="/settings"])) .tri-layout-middle-contents,
+body:not(:has(nav.header-links a[href*="/settings"])) .content-wrap,
+body:not(:has(nav.header-links a[href*="/settings"])) .page-content {
+  max-width: 1050px !important;
+  width: 100% !important;
+}
+
+body:not(:has(nav.header-links a[href*="/settings"])) main.content-wrap {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* =====================================================
+   9. PROFILE DROPDOWN
+   ===================================================== */
+.dropdown-menu,
+.dropdown-menu *,
+#dropdown-menu,
+#dropdown-menu *,
+[role="menu"],
+[role="menu"] * {
+  color: #111827 !important;
+}
+
+.dropdown-menu a,
+#dropdown-menu a,
+[role="menu"] a {
+  color: #111827 !important;
+  background: #ffffff !important;
+}
+
+.dropdown-menu a:hover,
+#dropdown-menu a:hover,
+[role="menu"] a:hover {
+  background: #f3f4f6 !important;
+}
+
+.dropdown-menu hr,
+.dropdown-menu li[role="presentation"],
+.dropdown-menu li:empty {
+  display: none !important;
+}
+
+.dropdown-menu li {
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Hide My Favourites in profile dropdown */
+[role="menu"] a[href*="/favourites"] {
+  display: none !important;
+}
+
+/* FINAL fix: nested sidebar page hover/active */
+#sidebar .chapter-contents-list li,
+#sidebar .chapter-contents-list li *,
+#sidebar .chapter-contents-list a,
+#sidebar .chapter-contents-list a * {
+  color: #ffffff !important;
+}
+
+#sidebar .chapter-contents-list li:hover,
+#sidebar .chapter-contents-list a:hover,
+#sidebar .chapter-contents-list .selected,
+#sidebar .chapter-contents-list .active {
+  background: rgba(255,255,255,0.15) !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+}
+
+#sidebar .chapter-contents-list li:hover *,
+#sidebar .chapter-contents-list a:hover *,
+#sidebar .chapter-contents-list .selected *,
+#sidebar .chapter-contents-list .active * {
+  color: #ffffff !important;
+}
+</style>
