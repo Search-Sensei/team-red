@@ -912,53 +912,65 @@ namespace S365.Search.Admin.UI.Services
             if (string.IsNullOrWhiteSpace(realm))
                 throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
 
-            var url = $"/admin/realms/{realm}/users?enabled=false&max=1000";
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
-            var response = await _httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
 
-            var json = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
-
-            var cutoff = DateTime.UtcNow - expiry;
+            var cutoff  = DateTime.UtcNow - expiry;
             var expired = new List<(string, string)>();
+            const int pageSize = 100;
+            var first = 0;
 
-            foreach (var userEl in doc.RootElement.EnumerateArray())
+            while (true)
             {
-                if (!userEl.TryGetProperty("id", out var idProp))
-                    continue;
+                var url      = $"/admin/realms/{realm}/users?enabled=false&max={pageSize}&first={first}";
+                var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
 
-                var userId = idProp.GetString();
-                if (string.IsNullOrEmpty(userId))
-                    continue;
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc  = JsonDocument.Parse(json);
+                var users = doc.RootElement.EnumerateArray().ToList();
 
-                if (!userEl.TryGetProperty("attributes", out var attrs))
-                    continue;
-
-                // Must have pendingPaymentSince attribute
-                if (!attrs.TryGetProperty("pendingPaymentSince", out var sinceArr) ||
-                    sinceArr.ValueKind != JsonValueKind.Array ||
-                    sinceArr.GetArrayLength() == 0)
-                    continue;
-
-                var sinceStr = sinceArr[0].GetString();
-                if (!DateTime.TryParse(sinceStr, null,
-                        System.Globalization.DateTimeStyles.RoundtripKind, out var since))
-                    continue;
-
-                if (since >= cutoff)
-                    continue;
-
-                // Get the associated org ID for cleanup
-                var orgId = "";
-                if (attrs.TryGetProperty("pendingOrgId", out var orgArr) &&
-                    orgArr.ValueKind == JsonValueKind.Array &&
-                    orgArr.GetArrayLength() > 0)
+                foreach (var userEl in users)
                 {
-                    orgId = orgArr[0].GetString() ?? "";
+                    if (!userEl.TryGetProperty("id", out var idProp))
+                        continue;
+
+                    var userId = idProp.GetString();
+                    if (string.IsNullOrEmpty(userId))
+                        continue;
+
+                    if (!userEl.TryGetProperty("attributes", out var attrs))
+                        continue;
+
+                    // Must have pendingPaymentSince attribute
+                    if (!attrs.TryGetProperty("pendingPaymentSince", out var sinceArr) ||
+                        sinceArr.ValueKind != JsonValueKind.Array ||
+                        sinceArr.GetArrayLength() == 0)
+                        continue;
+
+                    var sinceStr = sinceArr[0].GetString();
+                    if (!DateTime.TryParse(sinceStr, null,
+                            System.Globalization.DateTimeStyles.RoundtripKind, out var since))
+                        continue;
+
+                    if (since >= cutoff)
+                        continue;
+
+                    var orgId = "";
+                    if (attrs.TryGetProperty("pendingOrgId", out var orgArr) &&
+                        orgArr.ValueKind == JsonValueKind.Array &&
+                        orgArr.GetArrayLength() > 0)
+                    {
+                        orgId = orgArr[0].GetString() ?? "";
+                    }
+
+                    expired.Add((userId, orgId));
                 }
 
-                expired.Add((userId, orgId));
+                // If fewer results than page size, we've reached the last page
+                if (users.Count < pageSize)
+                    break;
+
+                first += pageSize;
             }
 
             return expired;

@@ -25,7 +25,8 @@ namespace S365.Search.Admin.UI.Services
         {
             _configuration = configuration;
             _logger = logger;
-            StripeConfiguration.ApiKey = configuration["Stripe:SecretKey"];
+            // ApiKey is set once at startup in Startup.ConfigureServices — not here,
+            // because StripeService is Scoped and would re-assign the process-global on every request.
         }
 
         /// <summary>
@@ -37,7 +38,11 @@ namespace S365.Search.Admin.UI.Services
             if (!PlanConfigKeys.TryGetValue(planId, out var configKey))
                 return null;
 
-            return _configuration[$"Stripe:Prices:{configKey}"];
+            var priceId = _configuration[$"Stripe:Prices:{configKey}"];
+
+            // Treat blank config values the same as missing — caller gets null and returns 400,
+            // rather than a cryptic Stripe API error for an empty Price ID.
+            return string.IsNullOrWhiteSpace(priceId) ? null : priceId;
         }
 
         /// <summary>
@@ -116,6 +121,16 @@ namespace S365.Search.Admin.UI.Services
                 session.Id, organisationId);
 
             return session.Url;
+        }
+
+        /// <summary>
+        /// Deletes a Stripe Customer. Used during registration rollback to avoid orphaned customers.
+        /// </summary>
+        public async Task DeleteCustomerAsync(string customerId)
+        {
+            var service = new CustomerService();
+            await service.DeleteAsync(customerId);
+            _logger.LogInformation("Deleted Stripe customer {CustomerId} during rollback.", customerId);
         }
 
         /// <summary>

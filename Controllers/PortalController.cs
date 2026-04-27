@@ -192,8 +192,9 @@ namespace S365.Search.Admin.UI.Controllers
             var displayName  = request.OrganisationName.Trim();
             var internalName = Regex.Replace(displayName, @"\s+", "-");
 
-            string? orgId  = null;
-            string? userId = null;
+            string? orgId            = null;
+            string? userId           = null;
+            string? stripeCustomerId = null;
 
             try
             {
@@ -241,8 +242,8 @@ namespace S365.Search.Admin.UI.Controllers
                 await _keycloakService.AssignClientRoleToUserAsync(adminToken, userId, clientUuid, roleId, roleName);
 
                 // Step 5: Create Stripe customer and checkout session
-                var stripeCustomerId = await _stripeService.CreateCustomerAsync(orgId, displayName, request.Email.Trim());
-                var checkoutUrl      = await _stripeService.CreateCheckoutSessionAsync(stripeCustomerId, priceId, orgId, userId);
+                stripeCustomerId = await _stripeService.CreateCustomerAsync(orgId, displayName, request.Email.Trim());
+                var checkoutUrl  = await _stripeService.CreateCheckoutSessionAsync(stripeCustomerId, priceId, orgId, userId);
 
                 _logger.LogInformation(
                     "Organisation '{OrgName}' created (pending payment). Stripe checkout session created for user '{Email}'.",
@@ -258,6 +259,8 @@ namespace S365.Search.Admin.UI.Controllers
                     await _keycloakService.DeleteUserAsync(adminToken, userId);
                 if (orgId != null)
                     await _keycloakService.DeleteOrganizationAsync(adminToken, orgId);
+                if (stripeCustomerId != null)
+                    await _stripeService.DeleteCustomerAsync(stripeCustomerId);
 
                 var reason = ex.Message switch
                 {

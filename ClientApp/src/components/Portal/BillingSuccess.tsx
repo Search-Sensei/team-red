@@ -6,8 +6,6 @@ import "./BillingSuccess.css";
 interface CheckoutResult {
     status: string;
     planName: string;
-    customerEmail: string;
-    subscriptionId: string;
 }
 
 const BillingSuccess: React.FC = () => {
@@ -74,11 +72,6 @@ const BillingSuccess: React.FC = () => {
                             <p className="ss-success-subtitle">
                                 Payment confirmed for <strong>{result.planName}</strong>.
                             </p>
-                            {result.customerEmail && (
-                                <p className="ss-success-email">
-                                    A confirmation has been sent to <strong>{result.customerEmail}</strong>.
-                                </p>
-                            )}
                             <p className="ss-success-note">
                                 Your account is being activated. You can log in once you receive
                                 your welcome email, or try logging in shortly.

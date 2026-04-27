@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -69,10 +70,22 @@ namespace S365.Search.Admin.UI.Controllers
                         break;
                 }
             }
+            catch (HttpRequestException ex)
+            {
+                // Transient infrastructure failure (Keycloak unreachable, timeout, etc.).
+                // Return 5xx so Stripe retries — the payment succeeded and the user must be enabled.
+                _logger.LogError(ex,
+                    "Transient error processing Stripe webhook event {EventId}. Returning 500 for Stripe retry.",
+                    stripeEvent.Id);
+                return StatusCode(500, new { error = "Upstream service temporarily unavailable. Stripe should retry." });
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing Stripe webhook event {EventId}.", stripeEvent.Id);
-                // Return 200 so Stripe doesn't retry — log the error for investigation
+                // Non-retryable business logic error (bad metadata, etc.).
+                // Return 200 so Stripe does not retry endlessly; the error is logged for manual investigation.
+                _logger.LogError(ex,
+                    "Non-retryable error processing Stripe webhook event {EventId}. Manual intervention may be required.",
+                    stripeEvent.Id);
             }
 
             return Ok();
@@ -104,12 +117,13 @@ namespace S365.Search.Admin.UI.Controllers
                     ? session.LineItems.Data[0].Description
                     : "your subscription";
 
+                // Omit PII (customerEmail) and internal IDs (subscriptionId) from the anonymous
+                // response — session IDs appear in browser history and referrer headers, so any
+                // captured ID should not leak customer data or billing identifiers.
                 return Ok(new
                 {
-                    status       = "success",
+                    status   = "success",
                     planName,
-                    customerEmail = session.CustomerDetails?.Email ?? "",
-                    subscriptionId = session.SubscriptionId ?? ""
                 });
             }
             catch (StripeException ex)
