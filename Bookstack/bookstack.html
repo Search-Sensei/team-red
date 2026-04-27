@@ -1,28 +1,217 @@
 <script>
-/* Redirect users from the BookStack home/books page to the main KB landing page */
 document.addEventListener("DOMContentLoaded", function () {
-  const target = "/books/documentation/page/introduction-or-getting-started";
 
-  if (window.location.pathname === "/" || window.location.pathname === "/books") {
-    window.location.href = target;
+  let path = window.location.pathname;
+
+  if (path.length > 1 && path.endsWith("/")) {
+    path = path.slice(0, -1);
   }
+
+  const leftSidebar = document.querySelector(".tri-layout-left");
+  if (!leftSidebar) return;
+
+  function hideDarkModeDropdownItem() {
+    const possibleItems = document.querySelectorAll(
+      "#header .dropdown-menu li, #header [role='menu'] li, #header .dropdown-menu a, #header [role='menu'] a"
+    );
+
+    possibleItems.forEach(function (item) {
+      const text = item.textContent.trim().toLowerCase();
+
+      if (text.includes("dark mode")) {
+        const row = item.closest("li") || item;
+        row.style.display = "none";
+      }
+    });
+  }
+
+  hideDarkModeDropdownItem();
+
+  document.addEventListener("click", function () {
+    setTimeout(hideDarkModeDropdownItem, 100);
+  });
+
+  function createSidebar(title, items) {
+    leftSidebar.innerHTML = "";
+
+    const box = document.createElement("div");
+    box.className = "custom-left-nav";
+
+    const heading = document.createElement("h3");
+    heading.textContent = title;
+    box.appendChild(heading);
+
+    items.forEach(function (item) {
+      const link = document.createElement("a");
+      link.href = item.href;
+      link.textContent = item.text;
+      link.className = "custom-left-nav-link";
+
+      if (window.location.pathname === item.href) {
+        link.classList.add("active");
+      }
+
+      box.appendChild(link);
+    });
+
+    leftSidebar.appendChild(box);
+  }
+
+  function getCleanCards() {
+    const cards = document.querySelectorAll("a.grid-card");
+    const items = [];
+
+    cards.forEach(function (card) {
+      const titleEl = card.querySelector(".grid-card-content h2, .grid-card-content h3");
+
+      if (titleEl) {
+        items.push({
+          text: titleEl.textContent.trim(),
+          href: card.getAttribute("href")
+        });
+      }
+    });
+
+    return items;
+  }
+
+  function createBookNavigation() {
+    leftSidebar.innerHTML = "";
+
+    const box = document.createElement("div");
+    box.className = "custom-left-nav book-tree-nav";
+
+    const heading = document.createElement("h3");
+    heading.textContent = "Book Navigation";
+    box.appendChild(heading);
+
+    const bookTitle = document.querySelector("h1")?.textContent.trim() || "Book";
+
+    const bookLink = document.createElement("a");
+    bookLink.href = path;
+    bookLink.textContent = bookTitle;
+    bookLink.className = "custom-left-nav-link book active";
+    box.appendChild(bookLink);
+
+    const contentLinks = [];
+    const seen = {};
+
+    document.querySelectorAll("main a[href]").forEach(function (link) {
+      const href = link.getAttribute("href");
+      const text = link.textContent.trim();
+
+      if (!href || !text || seen[href]) return;
+      seen[href] = true;
+
+      if (href.includes("/chapter/")) {
+        contentLinks.push({
+          type: "chapter",
+          text: text,
+          href: href,
+          pages: []
+        });
+      }
+
+      else if (href.includes("/page/")) {
+        if (
+          contentLinks.length > 0 &&
+          contentLinks[contentLinks.length - 1].type === "chapter"
+        ) {
+          contentLinks[contentLinks.length - 1].pages.push({
+            type: "page",
+            text: text,
+            href: href
+          });
+        }
+      }
+    });
+
+    contentLinks.forEach(function (item) {
+      const chapterWrap = document.createElement("div");
+      chapterWrap.className = "chapter-group";
+
+      const chapterButton = document.createElement("div");
+      chapterButton.className = "custom-left-nav-link chapter-toggle";
+
+      const arrow = document.createElement("span");
+      arrow.className = "chapter-arrow";
+      arrow.textContent = "›";
+
+      const title = document.createElement("a");
+      title.href = item.href;
+      title.textContent = item.text;
+      title.className = "chapter-title";
+
+      chapterButton.appendChild(arrow);
+      chapterButton.appendChild(title);
+
+      if (item.pages.length > 0) {
+        const count = document.createElement("span");
+        count.className = "chapter-count";
+        count.textContent = item.pages.length + " Pages";
+        chapterButton.appendChild(count);
+      }
+
+      const pageList = document.createElement("div");
+      pageList.className = "chapter-pages";
+
+      item.pages.forEach(function (page) {
+        const pageLink = document.createElement("a");
+        pageLink.href = page.href;
+        pageLink.textContent = page.text;
+        pageLink.className = "custom-left-nav-link page";
+
+        if (
+          window.location.pathname ===
+          new URL(page.href, window.location.origin).pathname
+        ) {
+          pageLink.classList.add("active");
+          chapterWrap.classList.add("open");
+        }
+
+        pageList.appendChild(pageLink);
+      });
+
+      chapterButton.addEventListener("click", function (e) {
+        if (e.target.tagName.toLowerCase() === "a") return;
+        if (item.pages.length === 0) return;
+
+        chapterWrap.classList.toggle("open");
+      });
+
+      chapterWrap.appendChild(chapterButton);
+      chapterWrap.appendChild(pageList);
+      box.appendChild(chapterWrap);
+    });
+
+    leftSidebar.appendChild(box);
+  }
+
+  if (path === "/" || path === "/shelves") {
+    createSidebar("Shelves", getCleanCards());
+  }
+
+  else if (path === "/books") {
+    createSidebar("Books", getCleanCards());
+  }
+
+  else if (path.startsWith("/shelves/")) {
+    createSidebar("Books in this Shelf", getCleanCards());
+  }
+
+  else if (path.startsWith("/books/")) {
+    const parts = path.split("/").filter(Boolean);
+
+    if (parts.length === 2) {
+      createBookNavigation();
+    }
+  }
+
 });
 </script>
 
 <style>
-/* =====================================================
-   1. BASE THEME
-   ===================================================== */
-html,
-body {
-  --color-primary: #00c6b6 !important;
-  background-color: #f3f4f6 !important;
-  color: #111827 !important;
-}
-
-/* =====================================================
-   2. HEADER / NAVBAR
-   ===================================================== */
+/* NAVBAR */
 header#header.primary-background,
 #header.primary-background,
 body > header#header {
@@ -37,231 +226,179 @@ body > header#header {
 #header nav button,
 #header .header-links,
 #header .header-links a,
-#header .header-links span,
-#header .header-links svg,
-#header .header-links button {
+#header .header-links span {
   color: #ffffff !important;
 }
 
-/* Hide top header search safely */
-#header-search-box-input,
-#header-search-box-button {
-  display: none !important;
-}
-
-#header .search-box {
-  pointer-events: none;
-}
-
-/* =====================================================
-   3. MAIN LAYOUT
-   ===================================================== */
-.container,
-.tri-layout-content {
-  background: transparent !important;
-}
-
-.tri-layout-container {
-  padding-left: 0 !important;
-  margin-left: 0 !important;
-}
-
-.tri-layout-middle {
-  max-width: 100% !important;
-  margin-left: 0 !important;
-}
-
-/* =====================================================
-   4. TYPOGRAPHY / TEXT
-   ===================================================== */
-h1,
-h2,
-h3,
-h4 {
-  color: #111827 !important;
-}
-
-a {
-  color: #1f2937 !important;
-  text-decoration: none !important;
-}
-
-a:hover {
-  color: #00b3a4 !important;
-}
-
-.text-muted {
-  color: #6b7280 !important;
-}
-
-/* Breadcrumbs */
-.breadcrumbs a,
-.breadcrumbs span {
-  color: #374151 !important;
-  font-weight: 500 !important;
-}
-
-.breadcrumbs a:hover {
-  color: #00b3a4 !important;
-}
-
-.breadcrumbs svg {
-  opacity: 0.7 !important;
-}
-
-/* =====================================================
-   5. CARDS / CONTENT BLOCKS
-   ===================================================== */
-.card,
-.grid-card,
-.entity-list-item {
-  background: #ffffff !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 6px !important;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
-}
-
-.entity-list-item .cover {
-  background-color: #d1d5db !important;
-}
-
-/* =====================================================
-   6. LEFT SIDEBAR / BOOK NAVIGATION
-   ===================================================== */
+/* LEFT SIDEBAR */
 .tri-layout-left,
 .tri-layout-left-contents,
-#sidebar,
-#sidebar .tri-layout-left-contents {
+#sidebar {
   background-color: #1d5d66 !important;
-  border-right: none !important;
+  min-height: calc(100vh - 60px) !important;
+  height: auto !important;
+  align-self: stretch !important;
+}
+
+.tri-layout-left {
   margin-left: 0 !important;
-  margin-right: 0 !important;
   padding-left: 0 !important;
-  min-height: calc(100vh - 68px) !important;
 }
 
 .tri-layout-left,
 .tri-layout-left * {
-  color: #ffffff !important;
+  color: #d7f4f1 !important;
+}
+
+/* RIGHT SIDEBAR */
+.tri-layout-right,
+.tri-layout-right-contents {
+  display: block !important;
+  visibility: visible !important;
   opacity: 1 !important;
 }
 
-.tri-layout-left-contents {
-  margin-top: 0 !important;
-  padding-top: 0 !important;
+/* CUSTOM LEFT NAV */
+.custom-left-nav {
+  padding: 26px 18px !important;
 }
 
-.tri-layout-left a,
-.tri-layout-left .list-item,
-.tri-layout-left .card,
-.tri-layout-left .entity-list-item,
-.tri-layout-left ul,
-.tri-layout-left li,
-.tri-layout-left .book-tree {
+.custom-left-nav h3 {
+  font-size: 18px !important;
+  font-weight: 400 !important;
+  margin: 0 0 18px 0 !important;
+  color: #d7f4f1 !important;
+}
+
+.custom-left-nav-link {
+  display: block !important;
+  position: relative !important;
+  padding: 8px 10px 8px 28px !important;
+  margin: 0 0 5px 0 !important;
   background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+  border-radius: 0 !important;
+  text-decoration: none !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  color: #c7eeee !important;
 }
 
-.tri-layout-left a:hover,
-.tri-layout-left .list-item:hover {
-  background: rgba(255,255,255,0.15) !important;
-  border-radius: 8px !important;
+/* LEFT VERTICAL LINE */
+.custom-left-nav-link::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: #8de9e1;
+  border-radius: 4px;
 }
 
-.tri-layout-left .selected,
-.tri-layout-left .active,
-.tri-layout-left li.selected,
-.tri-layout-left a.selected,
-.tri-layout-left .list-item.selected,
-.tri-layout-left .book-tree .selected {
-  background: rgba(255,255,255,0.18) !important;
-  color: #ffffff !important;
-  border-radius: 8px !important;
-}
-
-
-/* Fix nested chapter/page text */
-.tri-layout-left .chapter-child-menu,
-.tri-layout-left .chapter-child-menu *,
-.tri-layout-left .chapter-contents-list,
-.tri-layout-left .chapter-contents-list * {
+/* BOOK */
+.custom-left-nav-link.book {
+  font-weight: 600 !important;
   color: #ffffff !important;
 }
 
-.tri-layout-left .chapter-child-menu a {
-  color: rgba(255,255,255,0.85) !important;
+/* CHAPTER GROUP */
+.chapter-group {
+  margin-bottom: 4px !important;
 }
 
-.tri-layout-left .chapter-child-menu a:hover {
+/* CHAPTER BUTTON */
+.chapter-toggle {
+  cursor: pointer !important;
+  padding-left: 28px !important;
+}
+
+.chapter-title {
+  color: #c7eeee !important;
+  text-decoration: none !important;
+}
+
+.chapter-title:hover {
   color: #ffffff !important;
 }
 
-/* Hide sidebar search */
+/* ARROW */
+.chapter-arrow {
+  position: absolute;
+  left: 16px;
+  top: 8px;
+  font-size: 15px;
+  transition: transform 0.2s ease;
+}
+
+.chapter-group.open .chapter-arrow {
+  transform: rotate(90deg);
+}
+
+/* PAGE COUNT */
+.chapter-count {
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+  opacity: 0.75;
+}
+
+/* PAGE LIST HIDDEN BY DEFAULT */
+.chapter-pages {
+  display: none;
+}
+
+.chapter-group.open .chapter-pages {
+  display: block;
+}
+
+/* PAGE LINKS */
+.custom-left-nav-link.page {
+  padding-left: 52px !important;
+  font-size: 13px !important;
+  color: #d7f4f1 !important;
+}
+
+.custom-left-nav-link.page::after {
+  content: "›";
+  position: absolute;
+  left: 36px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #d7f4f1;
+  font-size: 13px;
+}
+
+/* HOVER AND ACTIVE */
+.custom-left-nav-link:hover {
+  color: #ffffff !important;
+  background: rgba(255,255,255,0.07) !important;
+}
+
+.custom-left-nav-link.active {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+/* HIDE LEFT SEARCH */
 #sidebar form.search-box,
 #sidebar input[name="term"],
 #sidebar button[type="submit"] {
   display: none !important;
 }
 
-/* =====================================================
-   7. HIDE UNWANTED BOOKSTACK SECTIONS
-   ===================================================== */
-#details,
-#recently-updated-pages,
-#recent-activity,
-#sidebar .mb-xl:nth-of-type(2),
-.comments-container,
-#comments,
-.comment-box,
-.comment-thread,
-.dark-mode-toggle,
-button[title*="Dark"],
-a[href*="dark"],
-form[action*="dark-mode"] {
-  display: none !important;
+/* FIX LEFT GAP */
+.container,
+.tri-layout-container {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
 }
 
-/* Hide right Details only, keep Actions */
-.tri-layout-right-contents > .mb-xl:first-child {
-  display: none !important;
+.tri-layout-middle {
+  margin-left: 0 !important;
+  max-width: 100% !important;
 }
 
-/* =====================================================
-   8. NORMAL USER VIEW ONLY
-   Admin is detected by the Settings link.
-   Normal users do not see Settings.
-   ===================================================== */
-body:not(:has(nav.header-links a[href*="/settings"])) nav.header-links a[href$="/shelves"],
-body:not(:has(nav.header-links a[href*="/settings"])) nav.header-links a[href$="/books"] {
-  display: none !important;
-}
-
-body:not(:has(nav.header-links a[href*="/settings"])) .tri-layout-right {
-  display: none !important;
-}
-
-body:not(:has(nav.header-links a[href*="/settings"])) .tri-layout-middle {
-  grid-column: 2 / 4 !important;
-  width: 100% !important;
-  max-width: none !important;
-}
-
-body:not(:has(nav.header-links a[href*="/settings"])) .tri-layout-middle-contents,
-body:not(:has(nav.header-links a[href*="/settings"])) .content-wrap,
-body:not(:has(nav.header-links a[href*="/settings"])) .page-content {
-  max-width: 1050px !important;
-  width: 100% !important;
-}
-
-body:not(:has(nav.header-links a[href*="/settings"])) main.content-wrap {
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-/* =====================================================
-   9. PROFILE DROPDOWN
-   ===================================================== */
+/* PROFILE DROPDOWN */
 .dropdown-menu,
 .dropdown-menu *,
 #dropdown-menu,
@@ -296,32 +433,39 @@ body:not(:has(nav.header-links a[href*="/settings"])) main.content-wrap {
   padding: 0 !important;
 }
 
-/* Hide My Favourites in profile dropdown */
-[role="menu"] a[href*="/favourites"] {
+/* EXTRA HIDE DARK MODE ROW */
+#header .dropdown-menu li:has(a[href*="dark"]),
+#header .dropdown-menu li:has(button[title*="Dark"]),
+#header .dropdown-menu li:has(button[aria-label*="Dark"]),
+#header [role="menu"] li:has(a[href*="dark"]),
+#header [role="menu"] li:has(button[title*="Dark"]),
+#header [role="menu"] li:has(button[aria-label*="Dark"]) {
   display: none !important;
 }
 
-/* FINAL fix: nested sidebar page hover/active */
-#sidebar .chapter-contents-list li,
-#sidebar .chapter-contents-list li *,
-#sidebar .chapter-contents-list a,
-#sidebar .chapter-contents-list a * {
-  color: #ffffff !important;
+/* HIDE DETAILS BLOCK */
+.tri-layout-right .entity-meta,
+.tri-layout-right .details,
+.tri-layout-right h3:has(+ .entity-meta) {
+  display: none !important;
 }
 
-#sidebar .chapter-contents-list li:hover,
-#sidebar .chapter-contents-list a:hover,
-#sidebar .chapter-contents-list .selected,
-#sidebar .chapter-contents-list .active {
-  background: rgba(255,255,255,0.15) !important;
-  color: #ffffff !important;
-  border-radius: 8px !important;
+/* HIDE CREATED / UPDATED INSIDE CARDS */
+.grid-card .text-muted,
+.grid-card .entity-meta,
+.entity-card .text-muted,
+.entity-card .entity-meta {
+  display: none !important;
+}
+/* HIDE RIGHT SIDEBAR DETAILS TITLE */
+.tri-layout-right-contents > h5:first-of-type {
+  display: none !important;
 }
 
-#sidebar .chapter-contents-list li:hover *,
-#sidebar .chapter-contents-list a:hover *,
-#sidebar .chapter-contents-list .selected *,
-#sidebar .chapter-contents-list .active * {
-  color: #ffffff !important;
+/* HIDE RIGHT SIDEBAR DETAILS LINKS/BLOCK */
+.tri-layout-right-contents > .details,
+.tri-layout-right-contents > .entity-meta,
+.tri-layout-right-contents > div:first-of-type {
+  display: none !important;
 }
 </style>
