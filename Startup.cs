@@ -69,8 +69,16 @@ namespace S365.Search.Admin.UI
             });
 
 
+            // Set the process-global Stripe API key once at startup.
+            // StripeService is Scoped, so doing this in its constructor would re-assign on every request.
+            var stripeKey = Configuration["Stripe:SecretKey"];
+            if (string.IsNullOrWhiteSpace(stripeKey))
+                throw new InvalidOperationException("Stripe:SecretKey is not configured. Application cannot start.");
+            Stripe.StripeConfiguration.ApiKey = stripeKey;
+
             services.AddHttpClient<KeycloakService>();
             services.AddScoped<KeycloakService>();
+            services.AddScoped<StripeService>();
             services.AddHostedService<InviteCleanupService>();
             services.AddScoped<IProxyAuthenticationService, ProxyAuthenticationService>();
             services.AddScoped<IAnalyticsProxyService, AnalyticsProxyService>();

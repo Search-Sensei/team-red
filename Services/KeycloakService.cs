@@ -290,7 +290,9 @@ namespace S365.Search.Admin.UI.Services
             return orgId;
         }
 
-        public async Task<string> CreateUserAsync(string adminToken, string email, string password, string firstName, string orgName)
+        public async Task<string> CreateUserAsync(
+            string adminToken, string email, string password, string firstName, string orgName,
+            bool enabled = false, string? pendingOrgId = null)
         {
             EnsureEnabled();
 
@@ -300,21 +302,29 @@ namespace S365.Search.Admin.UI.Services
 
             var url = $"/admin/realms/{realm}/users";
 
+            var attributes = new Dictionary<string, string[]>
+            {
+                { "active_tenant", new[] { orgName } },
+                { "tenants",       new[] { orgName } }
+            };
+
+            if (!enabled && pendingOrgId != null)
+            {
+                attributes["pendingPaymentSince"] = new[] { DateTime.UtcNow.ToString("o") };
+                attributes["pendingOrgId"]        = new[] { pendingOrgId };
+            }
+
             var userPayload = new
             {
                 username = email,
                 email = email,
                 firstName = firstName,
-                enabled = true,
+                enabled,
                 credentials = new[]
                 {
                     new { type = "password", value = password, temporary = false }
                 },
-                attributes = new Dictionary<string, string[]>
-                {
-                    { "active_tenant", new[] { orgName } },
-                    { "tenants", new[] { orgName } }
-                }
+                attributes
             };
 
             var content = new StringContent(
@@ -792,6 +802,178 @@ namespace S365.Search.Admin.UI.Services
             }
 
             return expiredIds;
+        }
+
+        /// <summary>
+        /// Enables a Keycloak user account (sets enabled = true).
+        /// Called after Stripe payment is confirmed.
+        /// </summary>
+        public async Task EnableUserAsync(string adminToken, string userId)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/users/{userId}";
+
+            var payload = new { enabled = true };
+            var content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json");
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.PutAsync(url, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to enable user {UserId}: {Status} {Error}", userId, response.StatusCode, error);
+                throw new Exception($"Failed to enable user: {response.StatusCode} - {error}");
+            }
+
+            _logger.LogInformation("Enabled Keycloak user {UserId}.", userId);
+        }
+
+        /// <summary>
+        /// Updates a Keycloak organisation's attributes with the Stripe customer and subscription IDs.
+        /// </summary>
+        public async Task UpdateOrgStripeAttributesAsync(
+            string adminToken, string orgId, string stripeCustomerId, string stripeSubscriptionId)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            // Fetch current org to merge attributes
+            var getUrl = $"/admin/realms/{realm}/organizations/{orgId}";
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var getResponse = await _httpClient.GetAsync(getUrl);
+            getResponse.EnsureSuccessStatusCode();
+
+            var json = await getResponse.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+
+            // Rebuild attributes preserving existing ones and adding Stripe IDs
+            var attributes = new Dictionary<string, string[]>();
+            if (doc.RootElement.TryGetProperty("attributes", out var existingAttrs))
+            {
+                foreach (var attr in existingAttrs.EnumerateObject())
+                {
+                    var values = attr.Value.EnumerateArray()
+                        .Select(v => v.GetString() ?? "")
+                        .ToArray();
+                    attributes[attr.Name] = values;
+                }
+            }
+
+            attributes["stripeCustomerId"]     = new[] { stripeCustomerId };
+            attributes["stripeSubscriptionId"] = new[] { stripeSubscriptionId };
+
+            var putPayload = new { attributes };
+            var content = new StringContent(
+                System.Text.Json.JsonSerializer.Serialize(putPayload),
+                Encoding.UTF8,
+                "application/json");
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var putUrl = $"/admin/realms/{realm}/organizations/{orgId}";
+            var putResponse = await _httpClient.PutAsync(putUrl, content);
+
+            if (!putResponse.IsSuccessStatusCode)
+            {
+                var error = await putResponse.Content.ReadAsStringAsync();
+                _logger.LogError(
+                    "Failed to update Stripe attributes on org {OrgId}: {Status} {Error}",
+                    orgId, putResponse.StatusCode, error);
+                throw new Exception($"Failed to update org Stripe attributes: {putResponse.StatusCode} - {error}");
+            }
+
+            _logger.LogInformation(
+                "Updated org {OrgId} with stripeCustomerId={CustomerId} stripeSubscriptionId={SubId}.",
+                orgId, stripeCustomerId, stripeSubscriptionId);
+        }
+
+        /// <summary>
+        /// Returns users who were created as part of the registration flow (have pendingPaymentSince attribute)
+        /// but whose payment was never confirmed within the expiry window.
+        /// Returns tuples of (userId, pendingOrgId) so the cleanup service can delete both.
+        /// </summary>
+        public async Task<List<(string UserId, string OrgId)>> GetExpiredPendingPaymentUsersAsync(
+            string adminToken, TimeSpan expiry)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+            var cutoff  = DateTime.UtcNow - expiry;
+            var expired = new List<(string, string)>();
+            const int pageSize = 100;
+            var first = 0;
+
+            while (true)
+            {
+                var url      = $"/admin/realms/{realm}/users?enabled=false&max={pageSize}&first={first}";
+                var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc  = JsonDocument.Parse(json);
+                var users = doc.RootElement.EnumerateArray().ToList();
+
+                foreach (var userEl in users)
+                {
+                    if (!userEl.TryGetProperty("id", out var idProp))
+                        continue;
+
+                    var userId = idProp.GetString();
+                    if (string.IsNullOrEmpty(userId))
+                        continue;
+
+                    if (!userEl.TryGetProperty("attributes", out var attrs))
+                        continue;
+
+                    // Must have pendingPaymentSince attribute
+                    if (!attrs.TryGetProperty("pendingPaymentSince", out var sinceArr) ||
+                        sinceArr.ValueKind != JsonValueKind.Array ||
+                        sinceArr.GetArrayLength() == 0)
+                        continue;
+
+                    var sinceStr = sinceArr[0].GetString();
+                    if (!DateTime.TryParse(sinceStr, null,
+                            System.Globalization.DateTimeStyles.RoundtripKind, out var since))
+                        continue;
+
+                    if (since >= cutoff)
+                        continue;
+
+                    var orgId = "";
+                    if (attrs.TryGetProperty("pendingOrgId", out var orgArr) &&
+                        orgArr.ValueKind == JsonValueKind.Array &&
+                        orgArr.GetArrayLength() > 0)
+                    {
+                        orgId = orgArr[0].GetString() ?? "";
+                    }
+
+                    expired.Add((userId, orgId));
+                }
+
+                // If fewer results than page size, we've reached the last page
+                if (users.Count < pageSize)
+                    break;
+
+                first += pageSize;
+            }
+
+            return expired;
         }
     }
 }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading;
@@ -103,7 +104,6 @@ namespace S365.Search.Admin.UI.Services
 
         private static async Task UpdateSessionTokensAsync(HttpContext httpContext, Models.SwitchContextResponse newTokens)
         {
-            // Rebuild the authentication properties with updated token values
             var authenticateResult = await httpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             if (authenticateResult?.Principal == null)
@@ -111,10 +111,18 @@ namespace S365.Search.Admin.UI.Services
                 throw new InvalidOperationException("Cannot update session: no active cookie authentication found.");
             }
 
-            var existingTokens = authenticateResult.Properties?.GetTokens() ?? new List<AuthenticationToken>();
+            // Deep-copy the properties dictionary to avoid IndexOutOfRangeException caused by
+            // concurrent reads from the shared SessionStore reference. Multiple in-flight requests
+            // from the same browser share the same AuthenticationTicket object (and its Items dict),
+            // so writing to it while another request reads it corrupts the Dictionary internals.
+            var originalItems = authenticateResult.Properties?.Items
+                ?? new Dictionary<string, string?>();
+            var freshProperties = new AuthenticationProperties(
+                originalItems.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+
+            var existingTokens = freshProperties.GetTokens().ToList();
             var updatedTokens = new List<AuthenticationToken>(existingTokens);
 
-            // Update or add tokens by name
             SetToken(updatedTokens, "access_token", newTokens.AccessToken ?? "");
             SetToken(updatedTokens, "expires_in", newTokens.ExpiresIn.ToString());
             SetToken(updatedTokens, "refresh_expires_in", newTokens.RefreshExpiresIn.ToString());
@@ -123,14 +131,24 @@ namespace S365.Search.Admin.UI.Services
             if (!string.IsNullOrEmpty(newTokens.SessionState))
                 SetToken(updatedTokens, "session_state", newTokens.SessionState);
 
-            var properties = authenticateResult.Properties ?? new AuthenticationProperties();
-            properties.StoreTokens(updatedTokens);
+            // Deduplicate by name (last value wins) before storing to prevent StoreTokens
+            // from writing a semicolon-separated TokenNamesKey with duplicate entries.
+            var deduped = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var t in updatedTokens)
+            {
+                if (t.Name != null)
+                    deduped[t.Name] = t.Value ?? "";
+            }
+            var finalTokens = deduped
+                .Select(kvp => new AuthenticationToken { Name = kvp.Key, Value = kvp.Value })
+                .ToList();
 
-            // Re-sign in to persist the updated cookie
+            freshProperties.StoreTokens(finalTokens);
+
             await httpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 authenticateResult.Principal,
-                properties);
+                freshProperties);
         }
 
         private static void SetToken(List<AuthenticationToken> tokens, string name, string value)

@@ -97,7 +97,6 @@ const LeftMenu: React.FC = () => {
           <div className="account-icon">
             <div className="sidebar-brand-icon"></div>
           </div>
-          <div className="sidebar-brand-text mx-3">OSP Admin</div>
         </Link>
 
         <hr className="sidebar-divider my-0" />

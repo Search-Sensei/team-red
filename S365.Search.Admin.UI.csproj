@@ -41,6 +41,7 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.16.0" />
 		<PackageReference Include="RestSharp" Version="112.0.0" />
 		<PackageReference Include="Steeltoe.Configuration.ConfigServer" Version="4.1.0" />
+		<PackageReference Include="Stripe.net" Version="51.1.0" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -132,7 +133,7 @@
 		<!-- Include the newly-built files in the publish output -->
 		<ItemGroup>
 			<DistFiles Include="$(ProjectDir)wwwroot\adminui\**" />
-			<ResolvedFileToPublish Include="@(DistFiles-&gt;'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+			<ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
 				<RelativePath>wwwroot/adminui/%(DistFiles.RecursiveDir)%(DistFiles.Filename)%(DistFiles.Extension)</RelativePath>
 				<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 			</ResolvedFileToPublish>

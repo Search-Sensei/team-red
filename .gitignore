@@ -66,3 +66,6 @@ global.json
 *.swo
 
 docker-compose.bookstack.yml
+
+## Local Stripe setup
+stripe.tar.gz

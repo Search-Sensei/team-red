@@ -16,13 +16,20 @@ namespace S365.Search.Admin.UI.Controllers
     public class PortalController : ControllerBase
     {
         private readonly KeycloakService _keycloakService;
+        private readonly StripeService _stripeService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<PortalController> _logger;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public PortalController(KeycloakService keycloakService, IConfiguration configuration, ILogger<PortalController> logger, IHttpClientFactory httpClientFactory)
+        public PortalController(
+            KeycloakService keycloakService,
+            StripeService stripeService,
+            IConfiguration configuration,
+            ILogger<PortalController> logger,
+            IHttpClientFactory httpClientFactory)
         {
             _keycloakService = keycloakService;
+            _stripeService = stripeService;
             _configuration = configuration;
             _logger = logger;
             _httpClientFactory = httpClientFactory;
@@ -177,11 +184,17 @@ namespace S365.Search.Admin.UI.Controllers
                 return StatusCode(500, new { error = "Registration service is temporarily unavailable." });
             }
 
-            var displayName = request.OrganisationName.Trim();
+            // Resolve the selected plan to a Stripe Price ID
+            var priceId = _stripeService.ResolvePriceId(request.PlanId);
+            if (priceId == null)
+                return BadRequest(new { errors = new { planId = new[] { "Invalid plan selected." } } });
+
+            var displayName  = request.OrganisationName.Trim();
             var internalName = Regex.Replace(displayName, @"\s+", "-");
 
-            string orgId = null;
-            string userId = null;
+            string? orgId            = null;
+            string? userId           = null;
+            string? stripeCustomerId = null;
 
             try
             {
@@ -201,7 +214,7 @@ namespace S365.Search.Admin.UI.Controllers
                     return Conflict(new { field = "organisationName", error = "An organisation with this name already exists." });
                 }
 
-                // Step 2: Create user
+                // Step 2: Create user as DISABLED — enabled only after payment confirmed via webhook
                 try
                 {
                     userId = await _keycloakService.CreateUserAsync(
@@ -209,11 +222,12 @@ namespace S365.Search.Admin.UI.Controllers
                         request.Email.Trim(),
                         request.Password,
                         request.ContactPerson.Trim(),
-                        internalName);
+                        internalName,
+                        enabled: false,
+                        pendingOrgId: orgId);
                 }
                 catch (Exception ex) when (ex.Message.Contains("Conflict"))
                 {
-                    // Rollback: delete the organisation created in Step 1
                     await _keycloakService.DeleteOrganizationAsync(adminToken, orgId);
                     return Conflict(new { field = "email", error = "A user with this email already exists." });
                 }
@@ -221,49 +235,42 @@ namespace S365.Search.Admin.UI.Controllers
                 // Step 3: Add user to organisation
                 await _keycloakService.AddUserToOrganizationAsync(adminToken, orgId, userId);
 
-                // Step 4: Assign org-admin client role to the user
-                var clientId = _configuration["KeycloakAuthentication:ClientId"] ?? "osp-adminui";
+                // Step 4: Assign org-admin client role
+                var clientId   = _configuration["KeycloakAuthentication:ClientId"] ?? "osp-adminui";
                 var clientUuid = await _keycloakService.GetClientUuidAsync(adminToken, clientId);
                 var (roleId, roleName) = await _keycloakService.GetClientRoleAsync(adminToken, clientUuid, "org-admin");
                 await _keycloakService.AssignClientRoleToUserAsync(adminToken, userId, clientUuid, roleId, roleName);
+
+                // Step 5: Create Stripe customer and checkout session
+                stripeCustomerId = await _stripeService.CreateCustomerAsync(orgId, displayName, request.Email.Trim());
+                var checkoutUrl  = await _stripeService.CreateCheckoutSessionAsync(stripeCustomerId, priceId, orgId, userId);
+
+                _logger.LogInformation(
+                    "Organisation '{OrgName}' created (pending payment). Stripe checkout session created for user '{Email}'.",
+                    displayName, request.Email);
+
+                return Ok(new { checkoutUrl });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Registration failed, rolling back created resources.");
 
-                // Rollback: delete user first, then organisation
                 if (userId != null)
-                {
                     await _keycloakService.DeleteUserAsync(adminToken, userId);
-                }
                 if (orgId != null)
-                {
                     await _keycloakService.DeleteOrganizationAsync(adminToken, orgId);
-                }
+                if (stripeCustomerId != null)
+                    await _stripeService.DeleteCustomerAsync(stripeCustomerId);
 
                 var reason = ex.Message switch
                 {
-                    var m when m.Contains("add user to organization") =>
-                        "Failed to add user to the organisation.",
-                    var m when m.Contains("create admin role") =>
-                        "Failed to create admin role for the organisation.",
-                    var m when m.Contains("assign admin role") =>
-                        "Failed to assign admin role to the user.",
+                    var m when m.Contains("add user to organization") => "Failed to add user to the organisation.",
+                    var m when m.Contains("assign admin role")        => "Failed to assign admin role to the user.",
                     _ => "An unexpected error occurred during registration."
                 };
 
                 return StatusCode(500, new { error = reason });
             }
-
-            _logger.LogInformation("Organisation '{OrgName}' registered successfully with admin user '{Email}'.",
-                request.OrganisationName, request.Email);
-
-            return Ok(new
-            {
-                message = "Organisation registered successfully.",
-                organisationId = orgId,
-                userId = userId
-            });
         }
     }
 }

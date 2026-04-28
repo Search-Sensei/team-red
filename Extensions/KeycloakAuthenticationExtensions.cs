@@ -73,6 +73,19 @@ namespace S365.Search.Admin.UI.Extensions
                 options.RequireHttpsMetadata = keycloakConfig.GetValue<bool>("RequireHttpsMetadata");
                 options.UsePkce = keycloakConfig.GetValue<bool>("UsePkce");
 
+                // Fix "Correlation failed" — SameSite=None without Secure is rejected by Chrome on HTTP,
+                // causing the correlation cookie to never be set. Using Unspecified omits the SameSite
+                // attribute entirely; browsers default to Lax, which allows the cookie on the top-level
+                // GET redirect back from Keycloak (code flow always uses GET, not form_post).
+                options.CorrelationCookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Unspecified;
+                options.CorrelationCookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+                options.CorrelationCookie.HttpOnly = true;
+                options.CorrelationCookie.IsEssential = true;
+                options.NonceCookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Unspecified;
+                options.NonceCookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+                options.NonceCookie.HttpOnly = true;
+                options.NonceCookie.IsEssential = true;
+
                 // Allow HTTP Keycloak in production temporarily
                 options.BackchannelHttpHandler = new HttpClientHandler()
                 {

@@ -7,6 +7,7 @@ import { PrivateRoute } from "./common/components/PrivateRoute";
 import Login from "./components/Account/Login";
 import Admin from "./components/Admin/Admin";
 import Register from "./components/Portal/Register";
+import BillingSuccess from "./components/Portal/BillingSuccess";
 import { getAdminSettings } from "./store/actions/adminsettings.actions";
 import { IAccount } from "./store/models/account.interface";
 import { IAdminSettingsState } from "./store/models/adminsettingsstate.interface";
@@ -19,6 +20,7 @@ const PortalApp: React.FC = () => (
     <div className="App" id="wrapper">
         <Router basename="/portal">
             <Switch>
+                <Route path="/billing/success" component={BillingSuccess} />
                 <Route path="/register" component={Register} />
             </Switch>
         </Router>
