@@ -145,13 +145,6 @@ document.addEventListener("DOMContentLoaded", function () {
       chapterButton.appendChild(arrow);
       chapterButton.appendChild(title);
 
-      if (item.pages.length > 0) {
-        const count = document.createElement("span");
-        count.className = "chapter-count";
-        count.textContent = item.pages.length + " Pages";
-        chapterButton.appendChild(count);
-      }
-
       const pageList = document.createElement("div");
       pageList.className = "chapter-pages";
 
@@ -250,7 +243,7 @@ body > header#header {
   color: #d7f4f1 !important;
 }
 
-/* RIGHT SIDEBAR */
+/* RIGHT SIDEBAR - KEEP CREATE BUTTONS VISIBLE */
 .tri-layout-right,
 .tri-layout-right-contents {
   display: block !important;
@@ -283,7 +276,6 @@ body > header#header {
   color: #c7eeee !important;
 }
 
-/* LEFT VERTICAL LINE */
 .custom-left-nav-link::before {
   content: "";
   position: absolute;
@@ -295,18 +287,15 @@ body > header#header {
   border-radius: 4px;
 }
 
-/* BOOK */
 .custom-left-nav-link.book {
   font-weight: 600 !important;
   color: #ffffff !important;
 }
 
-/* CHAPTER GROUP */
 .chapter-group {
   margin-bottom: 4px !important;
 }
 
-/* CHAPTER BUTTON */
 .chapter-toggle {
   cursor: pointer !important;
   padding-left: 28px !important;
@@ -321,7 +310,6 @@ body > header#header {
   color: #ffffff !important;
 }
 
-/* ARROW */
 .chapter-arrow {
   position: absolute;
   left: 16px;
@@ -334,15 +322,10 @@ body > header#header {
   transform: rotate(90deg);
 }
 
-/* PAGE COUNT */
 .chapter-count {
-  display: block;
-  font-size: 12px;
-  margin-top: 4px;
-  opacity: 0.75;
+  display: none !important;
 }
 
-/* PAGE LIST HIDDEN BY DEFAULT */
 .chapter-pages {
   display: none;
 }
@@ -351,7 +334,6 @@ body > header#header {
   display: block;
 }
 
-/* PAGE LINKS */
 .custom-left-nav-link.page {
   padding-left: 52px !important;
   font-size: 13px !important;
@@ -368,7 +350,6 @@ body > header#header {
   font-size: 13px;
 }
 
-/* HOVER AND ACTIVE */
 .custom-left-nav-link:hover {
   color: #ffffff !important;
   background: rgba(255,255,255,0.07) !important;
@@ -433,7 +414,7 @@ body > header#header {
   padding: 0 !important;
 }
 
-/* EXTRA HIDE DARK MODE ROW */
+/* HIDE DARK MODE ROW */
 #header .dropdown-menu li:has(a[href*="dark"]),
 #header .dropdown-menu li:has(button[title*="Dark"]),
 #header .dropdown-menu li:has(button[aria-label*="Dark"]),
@@ -443,10 +424,12 @@ body > header#header {
   display: none !important;
 }
 
-/* HIDE DETAILS BLOCK */
+/* HIDE DETAILS ONLY -  */
 .tri-layout-right .entity-meta,
 .tri-layout-right .details,
-.tri-layout-right h3:has(+ .entity-meta) {
+.tri-layout-right h3:has(+ .entity-meta),
+.tri-layout-right h5:has(+ .entity-meta),
+.tri-layout-right h5:has(+ .details) {
   display: none !important;
 }
 
@@ -457,15 +440,10 @@ body > header#header {
 .entity-card .entity-meta {
   display: none !important;
 }
-/* HIDE RIGHT SIDEBAR DETAILS TITLE */
-.tri-layout-right-contents > h5:first-of-type {
-  display: none !important;
-}
-
-/* HIDE RIGHT SIDEBAR DETAILS LINKS/BLOCK */
-.tri-layout-right-contents > .details,
-.tri-layout-right-contents > .entity-meta,
-.tri-layout-right-contents > div:first-of-type {
+/* Hide only the "Details" heading in right sidebar */
+.tri-layout-right h5:first-child,
+.tri-layout-right h4:first-child,
+.tri-layout-right h3:first-child {
   display: none !important;
 }
 </style>
