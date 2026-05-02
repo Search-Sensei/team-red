@@ -134,6 +134,84 @@ namespace S365.Search.Admin.UI.Services
         }
 
         /// <summary>
+        /// Retrieves a Stripe Subscription by ID. Returns null if not found or on error.
+        /// </summary>
+        public async Task<Subscription?> GetSubscriptionAsync(string subscriptionId)
+        {
+            var service = new SubscriptionService();
+            try
+            {
+                var options = new SubscriptionGetOptions
+                {
+                    Expand = new List<string> { "items.data.price.product" }
+                };
+                return await service.GetAsync(subscriptionId, options);
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogWarning("Failed to retrieve subscription {SubscriptionId}: {Message}", subscriptionId, ex.Message);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Lists all subscriptions for a Stripe Customer (active and cancelled), with product names expanded.
+        /// </summary>
+        public async Task<List<Subscription>> ListSubscriptionsAsync(string customerId)
+        {
+            var service = new SubscriptionService();
+            var options = new SubscriptionListOptions
+            {
+                Customer = customerId,
+                Limit    = 24,
+                Expand   = new List<string> { "data.items.data.price" },
+            };
+            var subs = await service.ListAsync(options);
+            return subs.Data;
+        }
+
+        /// <summary>
+        /// Changes the plan on an existing subscription to a new Stripe price.
+        /// Uses proration so charges are adjusted immediately.
+        /// </summary>
+        public async Task<Subscription> ChangeSubscriptionPlanAsync(string subscriptionId, string newPriceId)
+        {
+            var service = new SubscriptionService();
+            var sub = await service.GetAsync(subscriptionId);
+            var itemId = sub.Items.Data[0].Id;
+
+            var options = new SubscriptionUpdateOptions
+            {
+                Items = new List<SubscriptionItemOptions>
+                {
+                    new SubscriptionItemOptions
+                    {
+                        Id    = itemId,
+                        Price = newPriceId,
+                    }
+                },
+                ProrationBehavior = "none",
+                Expand            = new List<string> { "items.data.price.product" },
+            };
+            return await service.UpdateAsync(subscriptionId, options);
+        }
+
+        /// <summary>
+        /// Lists the most recent invoices for a Stripe Customer (up to 24).
+        /// </summary>
+        public async Task<List<Invoice>> ListInvoicesAsync(string customerId)
+        {
+            var service = new InvoiceService();
+            var options = new InvoiceListOptions
+            {
+                Customer = customerId,
+                Limit    = 24,
+            };
+            var invoices = await service.ListAsync(options);
+            return invoices.Data;
+        }
+
+        /// <summary>
         /// Parses and validates an incoming Stripe webhook event.
         /// Throws StripeException if the signature is invalid.
         /// </summary>

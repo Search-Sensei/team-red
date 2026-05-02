@@ -1,4 +1,4 @@
-import React, { Dispatch, Fragment, useState, } from "react";
+import React, { Dispatch, Fragment, useEffect, useState, } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import LoadingIndicator from "../../common/components/LoadingIndicator";
 import TopCard from "../../common/components/TopCard";
@@ -10,9 +10,93 @@ import { updateCurrentPath } from "../../store/actions/root.actions";
 //import OrderList from "../Orders/OrderList";
 import { IQueryRule } from "../../store/models/queryrule.interface";
 import { QueryRuleType } from "../../store/models/queryruletype";
+import { IAccount } from "../../store/models/account.interface";
 import { IStateType } from "../../store/models/root.interface";
 import QueryRulesMessageAlert from "../QueryRules/QueryRuleMessageAlert";
 import QueryRulesList from "../QueryRules/QueryRulesList";
+
+type SubscriptionInfo = {
+    status: string;
+    planName: string;
+    currentPeriodEnd: string | null;
+    cancelAtPeriodEnd: boolean;
+};
+
+function SubscriptionCard() {
+    const account: IAccount = useSelector((state: IStateType) => state.account);
+    const canViewBilling =
+        !account.isAuthenticationEnabled ||
+        account.fullGroups.includes("org-admin") ||
+        account.fullGroups.includes("admin");
+
+    const [sub, setSub] = useState<SubscriptionInfo | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!canViewBilling) return;
+        let cancelled = false;
+        setLoading(true);
+        fetch("/portal/api/subscription", { credentials: "include" })
+            .then(async (res) => {
+                if (res.status === 404) return null;
+                if (!res.ok) throw new Error(`Error ${res.status}`);
+                return res.json() as Promise<SubscriptionInfo>;
+            })
+            .then((data) => { if (!cancelled) setSub(data); })
+            .catch((e) => { if (!cancelled) setError(e?.message || "Failed to load subscription"); })
+            .finally(() => { if (!cancelled) setLoading(false); });
+        return () => { cancelled = true; };
+    }, [canViewBilling]);
+
+    if (!canViewBilling) return null;
+
+    const statusColor = (status: string) => {
+        if (status === "Active") return "#28a745";
+        if (status === "Cancelled") return "#dc3545";
+        if (status === "Past Due" || status === "Unpaid") return "#ffc107";
+        return "#6c757d";
+    };
+
+    return (
+        <div className="col-xl-6 col-lg-6">
+            <div className="card shadow mb-4">
+                <div className="card-header py-3">
+                    <h6 className="m-0 font-weight-bold">Subscription</h6>
+                </div>
+                <div className="card-body">
+                    {loading && <p className="text-muted mb-0">Loading…</p>}
+                    {!loading && error && <p className="text-danger mb-0">{error}</p>}
+                    {!loading && !error && !sub && <p className="text-muted mb-0">No active subscription.</p>}
+                    {!loading && !error && sub && (
+                        <div>
+                            <div className="d-flex align-items-center mb-2">
+                                <span
+                                    className="font-weight-bold mr-2"
+                                    style={{ color: statusColor(sub.status), fontSize: "1rem" }}
+                                >
+                                    {sub.status}
+                                </span>
+                                {sub.cancelAtPeriodEnd && (
+                                    <span className="badge badge-warning ml-1">Cancels at period end</span>
+                                )}
+                            </div>
+                            <p className="mb-1 text-gray-800">{sub.planName}</p>
+                            {sub.currentPeriodEnd && (
+                                <p className="mb-0 text-muted" style={{ fontSize: "0.82rem" }}>
+                                    {sub.cancelAtPeriodEnd ? "Ends" : "Renews"}{" "}
+                                    {new Date(sub.currentPeriodEnd).toLocaleDateString(undefined, {
+                                        year: "numeric", month: "short", day: "numeric"
+                                    })}
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
 
 const Home: React.FC = () => {
     //const products: IProductState = useSelector((state: IStateType) => state.products);
@@ -65,6 +149,10 @@ const Home: React.FC = () => {
             <div className="row">
                 <TopCard title={getQueryRuleTitle(QueryRuleType.Feature)} text={`${features.length}`} icon="newspaper" class="primary" />
                 <TopCard title={getQueryRuleTitle(QueryRuleType.Boost)} text={`${boosts.length}`} icon="arrow-circle-up" class="primary" />
+            </div>
+
+            <div className="row">
+                <SubscriptionCard />
             </div>
 
             {

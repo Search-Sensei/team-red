@@ -52,6 +52,11 @@ const LeftMenu: React.FC = () => {
     account.fullGroups.includes("org-admin") ||
     account.fullGroups.includes("admin");
 
+  const canViewBilling =
+    !account.isAuthenticationEnabled ||
+    account.fullGroups.includes("org-admin") ||
+    account.fullGroups.includes("admin");
+
   let [leftMenuVisibility, setLeftMenuVisibility] = useState(false);
 
   useEffect(() => {
@@ -182,10 +187,10 @@ const LeftMenu: React.FC = () => {
           </li>
         )}
 
-        {showAdminSidebar?.customerBilling?.isEnabled == true && (
+        {canViewBilling && (
           <li className="nav-item">
             <Link className="nav-link" to="/customer-billing">
-              <i className="fas fa-fw fa-arrow-circle-up"></i>
+              <i className="fas fa-fw fa-credit-card"></i>
               <span>Customer Billing</span>
             </Link>
           </li>
