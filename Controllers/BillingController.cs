@@ -170,13 +170,7 @@ namespace S365.Search.Admin.UI.Controllers
             if (stripeEvent.Data.Object is not Session session)
                 return;
 
-            var invoice = stripeEvent.Data.Object as Invoice;
-
-            // Recurring subscription, not necessary to create new organisation
-            if (invoice.BillingReason != "subscription_create")
-                return;
-
-            var subscription = new SubscriptionService().GetAsync(session.SubscriptionId).Result;
+            var subscription = await new SubscriptionService().GetAsync(session.SubscriptionId);
             var meta = subscription.Metadata;
 
             var adminToken = await _keycloakService.GetAdminTokenAsync();
@@ -210,14 +204,13 @@ namespace S365.Search.Admin.UI.Controllers
                 userId = await _keycloakService.CreateUserAsync(
                     adminToken,
                     meta["email"],
-                    password: null,
                     meta["contactPerson"],
                     meta["orgInternalName"],
                     enabled: true,
                     pendingOrgId: orgId
                 );
             }
-            catch (Exception ex) when (ex.Message.Contains("Conflict"))
+            catch (Exception)
             {
                 await _keycloakService.DeleteOrganizationAsync(adminToken, orgId);
                 _logger.LogError(
@@ -226,7 +219,7 @@ namespace S365.Search.Admin.UI.Controllers
                     session.SubscriptionId
                 );
 
-                return;
+                throw;
             }
 
             await _keycloakService.AddUserToOrganizationAsync(adminToken, orgId, userId);
