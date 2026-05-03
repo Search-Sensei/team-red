@@ -1,13 +1,14 @@
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using S365.Search.Admin.UI.Models;
 using S365.Search.Admin.UI.Services;
-using System;
-using System.Net.Http;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace S365.Search.Admin.UI.Controllers
 {
@@ -26,7 +27,8 @@ namespace S365.Search.Admin.UI.Controllers
             StripeService stripeService,
             IConfiguration configuration,
             ILogger<PortalController> logger,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory
+        )
         {
             _keycloakService = keycloakService;
             _stripeService = stripeService;
@@ -42,12 +44,18 @@ namespace S365.Search.Admin.UI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var orgName = User.FindFirst("organization")?.Value
+            var orgName =
+                User.FindFirst("organization")?.Value
                 ?? User.FindFirst("org_id")?.Value
                 ?? User.FindFirst("active_tenant")?.Value;
 
             if (string.IsNullOrWhiteSpace(orgName))
-                return BadRequest(new { error = "Unable to determine your organisation. Please ensure you are logged in to an organisation." });
+                return BadRequest(
+                    new
+                    {
+                        error = "Unable to determine your organisation. Please ensure you are logged in to an organisation.",
+                    }
+                );
 
             string adminToken;
             try
@@ -57,7 +65,10 @@ namespace S365.Search.Admin.UI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to obtain admin token during user invitation.");
-                return StatusCode(500, new { error = "Invitation service is temporarily unavailable." });
+                return StatusCode(
+                    500,
+                    new { error = "Invitation service is temporarily unavailable." }
+                );
             }
 
             string? orgId;
@@ -76,68 +87,108 @@ namespace S365.Search.Admin.UI.Controllers
                 return StatusCode(500, new { error = "Failed to locate your organisation." });
             }
 
-            var email     = request.Email.Trim();
+            var email = request.Email.Trim();
             var firstName = request.FirstName.Trim();
-            var lastName  = request.LastName.Trim();
-            var role      = request.Role.Trim();
+            var lastName = request.LastName.Trim();
+            var role = request.Role.Trim();
 
             // Step 1: Create a disabled user in Keycloak tagged with invitedAt
             string userId;
             try
             {
-                userId = await _keycloakService.CreateInvitedUserAsync(adminToken, email, firstName, lastName, orgName);
+                userId = await _keycloakService.CreateInvitedUserAsync(
+                    adminToken,
+                    email,
+                    firstName,
+                    lastName,
+                    orgName
+                );
             }
             catch (KeycloakConflictException)
             {
-                return Conflict(new { field = "email", error = $"A user with email {email} already exists." });
+                return Conflict(
+                    new { field = "email", error = $"A user with email {email} already exists." }
+                );
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to create invited user '{Email}'.", email);
-                return StatusCode(500, new { error = "Failed to create the user. Please try again." });
+                return StatusCode(
+                    500,
+                    new { error = "Failed to create the user. Please try again." }
+                );
             }
 
             try
             {
                 // Step 2: Assign the requested client role (org-admin or contributor)
-                var clientId   = _configuration["KeycloakAuthentication:ClientId"] ?? "osp-adminui";
+                var clientId = _configuration["KeycloakAuthentication:ClientId"] ?? "osp-adminui";
                 var clientUuid = await _keycloakService.GetClientUuidAsync(adminToken, clientId);
-                var (roleId, roleName) = await _keycloakService.GetClientRoleAsync(adminToken, clientUuid, role);
-                await _keycloakService.AssignClientRoleToUserAsync(adminToken, userId, clientUuid, roleId, roleName);
+                var (roleId, roleName) = await _keycloakService.GetClientRoleAsync(
+                    adminToken,
+                    clientUuid,
+                    role
+                );
+                await _keycloakService.AssignClientRoleToUserAsync(
+                    adminToken,
+                    userId,
+                    clientUuid,
+                    roleId,
+                    roleName
+                );
 
                 // Step 3: Add user to the organisation
                 await _keycloakService.AddUserToOrganizationAsync(adminToken, orgId, userId);
 
                 // Step 4: Send invite email via Keycloak execute-actions-email (24 h link)
-                var appBaseUrl  = _configuration["Application:BaseUrl"]
-                                  ?? $"{Request.Scheme}://{Request.Host}";
+                var appBaseUrl =
+                    _configuration["Application:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
                 var redirectUri = appBaseUrl.TrimEnd('/') + "/";
-                await _keycloakService.SendExecuteActionsEmailAsync(adminToken, userId, clientId, redirectUri);
+                await _keycloakService.SendExecuteActionsEmailAsync(
+                    adminToken,
+                    userId,
+                    clientId,
+                    redirectUri
+                );
             }
             catch (Exception ex)
             {
                 // Rollback: remove the user we just created so the admin can retry cleanly
-                _logger.LogError(ex, "Invite flow failed for '{Email}' — rolling back user creation.", email);
+                _logger.LogError(
+                    ex,
+                    "Invite flow failed for '{Email}' — rolling back user creation.",
+                    email
+                );
                 await _keycloakService.DeleteUserAsync(adminToken, userId);
-                return StatusCode(500, new { error = "Failed to complete the invitation. Please try again." });
+                return StatusCode(
+                    500,
+                    new { error = "Failed to complete the invitation. Please try again." }
+                );
             }
 
             _logger.LogInformation(
                 "User '{Email}' invited to organisation '{OrgName}' with role '{Role}'.",
-                email, orgName, role);
-
-            return Ok(new
-            {
-                message          = $"Invitation sent successfully to {email}.",
                 email,
-                organisationName = orgName,
+                orgName,
                 role
-            });
+            );
+
+            return Ok(
+                new
+                {
+                    message = $"Invitation sent successfully to {email}.",
+                    email,
+                    organisationName = orgName,
+                    role,
+                }
+            );
         }
 
         [AllowAnonymous]
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] OrganisationRegistrationRequest request)
+        public async Task<IActionResult> Register(
+            [FromBody] OrganisationRegistrationRequest request
+        )
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -145,132 +196,108 @@ namespace S365.Search.Admin.UI.Controllers
             // Validate that the organisation URL is reachable
             try
             {
-                var urlClient = _httpClientFactory.CreateClient("UrlValidation");
-                urlClient.Timeout = TimeSpan.FromSeconds(5);
-                var urlRequest = new HttpRequestMessage(HttpMethod.Head, request.OrganisationUrl.Trim());
-                urlRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (compatible; RegistrationValidator/1.0)");
-                var urlResponse = await urlClient.SendAsync(urlRequest);
-
-                // Some servers block HEAD, fall back to GET
-                if (urlResponse.StatusCode == System.Net.HttpStatusCode.MethodNotAllowed ||
-                    urlResponse.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                bool isValid = await IsValidOrganisationUrl(request);
+                if (!isValid)
                 {
-                    urlRequest = new HttpRequestMessage(HttpMethod.Get, request.OrganisationUrl.Trim());
-                    urlRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0 (compatible; RegistrationValidator/1.0)");
-                    urlResponse = await urlClient.SendAsync(urlRequest);
-                }
-
-                // Accept 2xx and 3xx (redirects) as valid
-                var statusCode = (int)urlResponse.StatusCode;
-                if (statusCode >= 400)
-                {
-                    return BadRequest(new { errors = new { organisationUrl = new[] { "Invalid URL. Please provide a valid and accessible website address." } } });
+                    return BadRequest(
+                        new
+                        {
+                            errors = new
+                            {
+                                organisationUrl = new[]
+                                {
+                                    "Invalid URL. Please provide a valid and accessible website address.",
+                                },
+                            },
+                        }
+                    );
                 }
             }
             catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException)
             {
-                _logger.LogWarning(ex, "Organisation URL validation failed for {Url}", request.OrganisationUrl);
-                return BadRequest(new { errors = new { organisationUrl = new[] { "Invalid URL. Please provide a valid and accessible website address." } } });
+                _logger.LogWarning(
+                    ex,
+                    "Organisation URL validation failed for {Url}",
+                    request.OrganisationUrl
+                );
+                return BadRequest(
+                    new
+                    {
+                        errors = new
+                        {
+                            organisationUrl = new[]
+                            {
+                                "Invalid URL. Please provide a valid and accessible website address.",
+                            },
+                        },
+                    }
+                );
             }
 
-            string adminToken;
-            try
-            {
-                adminToken = await _keycloakService.GetAdminTokenAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to obtain admin token during registration.");
-                return StatusCode(500, new { error = "Registration service is temporarily unavailable." });
-            }
+            var displayName = request.OrganisationName.Trim();
+            var internalName = Regex.Replace(displayName, @"\s+", "-");
+            var contactEmail = request.Email.Trim();
 
-            // Resolve the selected plan to a Stripe Price ID
+            // Create Stripe Customer
+            var stripeCustomerId = await _stripeService.CreateCustomerAsync(
+                internalName,
+                displayName,
+                contactEmail
+            );
+
             var priceId = _stripeService.ResolvePriceId(request.PlanId);
             if (priceId == null)
-                return BadRequest(new { errors = new { planId = new[] { "Invalid plan selected." } } });
+                return BadRequest(
+                    new { errors = new { planId = new[] { "Invalid plan selected." } } }
+                );
 
-            var displayName  = request.OrganisationName.Trim();
-            var internalName = Regex.Replace(displayName, @"\s+", "-");
+            // Create Payment intent with metadata for provisioning after payment success
+            var checkoutUrl = await _stripeService.CreateCheckoutSessionAsync(
+                stripeCustomerId,
+                priceId,
+                metadata: new Dictionary<string, string>
+                {
+                    ["orgInternalName"] = internalName,
+                    ["orgDisplayName"] = displayName,
+                    ["contactPerson"] = request.ContactPerson.Trim(),
+                    ["contactPhone"] = request.ContactPhone.Trim(),
+                    ["orgUrl"] = request.OrganisationUrl.Trim(),
+                    ["email"] = request.Email.Trim(),
+                }
+            );
 
-            string? orgId            = null;
-            string? userId           = null;
-            string? stripeCustomerId = null;
+            return Ok(new { checkoutUrl });
+        }
 
-            try
+        private async Task<bool> IsValidOrganisationUrl(OrganisationRegistrationRequest request)
+        {
+            var urlClient = _httpClientFactory.CreateClient("UrlValidation");
+            urlClient.Timeout = TimeSpan.FromSeconds(5);
+            var urlRequest = new HttpRequestMessage(
+                HttpMethod.Head,
+                request.OrganisationUrl.Trim()
+            );
+            urlRequest.Headers.UserAgent.ParseAdd(
+                "Mozilla/5.0 (compatible; RegistrationValidator/1.0)"
+            );
+            var urlResponse = await urlClient.SendAsync(urlRequest);
+
+            // Some servers block HEAD, fall back to GET
+            if (
+                urlResponse.StatusCode == System.Net.HttpStatusCode.MethodNotAllowed
+                || urlResponse.StatusCode == System.Net.HttpStatusCode.Forbidden
+            )
             {
-                // Step 1: Create organisation
-                try
-                {
-                    orgId = await _keycloakService.CreateOrganizationAsync(
-                        adminToken,
-                        internalName,
-                        displayName,
-                        request.ContactPerson.Trim(),
-                        request.ContactPhone.Trim(),
-                        request.OrganisationUrl.Trim());
-                }
-                catch (Exception ex) when (ex.Message.Contains("Conflict"))
-                {
-                    return Conflict(new { field = "organisationName", error = "An organisation with this name already exists." });
-                }
-
-                // Step 2: Create user as DISABLED — enabled only after payment confirmed via webhook
-                try
-                {
-                    userId = await _keycloakService.CreateUserAsync(
-                        adminToken,
-                        request.Email.Trim(),
-                        request.Password,
-                        request.ContactPerson.Trim(),
-                        internalName,
-                        enabled: false,
-                        pendingOrgId: orgId);
-                }
-                catch (Exception ex) when (ex.Message.Contains("Conflict"))
-                {
-                    await _keycloakService.DeleteOrganizationAsync(adminToken, orgId);
-                    return Conflict(new { field = "email", error = "A user with this email already exists." });
-                }
-
-                // Step 3: Add user to organisation
-                await _keycloakService.AddUserToOrganizationAsync(adminToken, orgId, userId);
-
-                // Step 4: Assign org-admin client role
-                var clientId   = _configuration["KeycloakAuthentication:ClientId"] ?? "osp-adminui";
-                var clientUuid = await _keycloakService.GetClientUuidAsync(adminToken, clientId);
-                var (roleId, roleName) = await _keycloakService.GetClientRoleAsync(adminToken, clientUuid, "org-admin");
-                await _keycloakService.AssignClientRoleToUserAsync(adminToken, userId, clientUuid, roleId, roleName);
-
-                // Step 5: Create Stripe customer and checkout session
-                stripeCustomerId = await _stripeService.CreateCustomerAsync(orgId, displayName, request.Email.Trim());
-                var checkoutUrl  = await _stripeService.CreateCheckoutSessionAsync(stripeCustomerId, priceId, orgId, userId);
-
-                _logger.LogInformation(
-                    "Organisation '{OrgName}' created (pending payment). Stripe checkout session created for user '{Email}'.",
-                    displayName, request.Email);
-
-                return Ok(new { checkoutUrl });
+                urlRequest = new HttpRequestMessage(HttpMethod.Get, request.OrganisationUrl.Trim());
+                urlRequest.Headers.UserAgent.ParseAdd(
+                    "Mozilla/5.0 (compatible; RegistrationValidator/1.0)"
+                );
+                urlResponse = await urlClient.SendAsync(urlRequest);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Registration failed, rolling back created resources.");
 
-                if (userId != null)
-                    await _keycloakService.DeleteUserAsync(adminToken, userId);
-                if (orgId != null)
-                    await _keycloakService.DeleteOrganizationAsync(adminToken, orgId);
-                if (stripeCustomerId != null)
-                    await _stripeService.DeleteCustomerAsync(stripeCustomerId);
-
-                var reason = ex.Message switch
-                {
-                    var m when m.Contains("add user to organization") => "Failed to add user to the organisation.",
-                    var m when m.Contains("assign admin role")        => "Failed to assign admin role to the user.",
-                    _ => "An unexpected error occurred during registration."
-                };
-
-                return StatusCode(500, new { error = reason });
-            }
+            // Accept 2xx and 3xx (redirects) as valid
+            var statusCode = (int)urlResponse.StatusCode;
+            return statusCode < 400;
         }
     }
 }

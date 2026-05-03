@@ -18,16 +18,14 @@ namespace S365.Search.Admin.UI.Models
         [EmailAddress(ErrorMessage = "Invalid email format.")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Password is required.")]
-        [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
-        public string Password { get; set; } = string.Empty;
-
         [Required(ErrorMessage = "Organisation URL is required.")]
         public string OrganisationUrl { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Please select a subscription plan.")]
-        [RegularExpression("^(essentials_monthly|essentials_annual|ai_search_monthly|ai_search_annual)$",
-            ErrorMessage = "Invalid plan selected.")]
+        [RegularExpression(
+            "^(essentials_monthly|essentials_annual|ai_search_monthly|ai_search_annual)$",
+            ErrorMessage = "Invalid plan selected."
+        )]
         public string PlanId { get; set; } = string.Empty;
     }
 }
