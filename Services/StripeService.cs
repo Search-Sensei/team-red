@@ -16,9 +16,9 @@ namespace S365.Search.Admin.UI.Services
         private static readonly Dictionary<string, string> PlanConfigKeys = new()
         {
             { "essentials_monthly", "EssentialsMonthly" },
-            { "essentials_annual",  "EssentialsAnnual"  },
-            { "ai_search_monthly",  "AiSearchMonthly"   },
-            { "ai_search_annual",   "AiSearchAnnual"    },
+            { "essentials_annual", "EssentialsAnnual" },
+            { "ai_search_monthly", "AiSearchMonthly" },
+            { "ai_search_annual", "AiSearchAnnual" },
         };
 
         public StripeService(IConfiguration configuration, ILogger<StripeService> logger)
@@ -56,16 +56,19 @@ namespace S365.Search.Admin.UI.Services
                 Name = orgName,
                 Metadata = new Dictionary<string, string>
                 {
-                    { "organisationId",   orgId   },
-                    { "organisationName", orgName }
-                }
+                    { "organisationId", orgId },
+                    { "organisationName", orgName },
+                },
             };
 
             var service = new CustomerService();
             var customer = await service.CreateAsync(options);
 
             _logger.LogInformation(
-                "Created Stripe customer {CustomerId} for organisation '{OrgName}'.", customer.Id, orgName);
+                "Created Stripe customer {CustomerId} for organisation '{OrgName}'.",
+                customer.Id,
+                orgName
+            );
 
             return customer.Id;
         }
@@ -77,40 +80,30 @@ namespace S365.Search.Admin.UI.Services
         public async Task<string> CreateCheckoutSessionAsync(
             string customerId,
             string priceId,
-            string organisationId,
-            string userId)
+            Dictionary<string, string> metadata
+        )
         {
-            var baseUrl       = _configuration["Application:BaseUrl"]?.TrimEnd('/') ?? "";
-            var successUrl    = _configuration["Stripe:SuccessUrl"] ?? $"{baseUrl}/portal/billing/success?session_id={{CHECKOUT_SESSION_ID}}";
-            var cancelUrl     = _configuration["Stripe:CancelUrl"]  ?? $"{baseUrl}/portal/register?cancelled=true";
+            var baseUrl = _configuration["Application:BaseUrl"]?.TrimEnd('/') ?? "";
+
+            var successUrl =
+                _configuration["Stripe:SuccessUrl"]
+                ?? $"{baseUrl}/portal/billing/success?session_id={{CHECKOUT_SESSION_ID}}";
+
+            var cancelUrl =
+                _configuration["Stripe:CancelUrl"] ?? $"{baseUrl}/portal/register?cancelled=true";
 
             var options = new SessionCreateOptions
             {
-                Customer           = customerId,
-                Mode               = "subscription",
+                Customer = customerId,
+                Mode = "subscription",
                 PaymentMethodTypes = new List<string> { "card" },
                 LineItems = new List<SessionLineItemOptions>
                 {
-                    new SessionLineItemOptions
-                    {
-                        Price    = priceId,
-                        Quantity = 1,
-                    }
+                    new SessionLineItemOptions { Price = priceId, Quantity = 1 },
                 },
                 SuccessUrl = successUrl,
-                CancelUrl  = cancelUrl,
-                Metadata   = new Dictionary<string, string>
-                {
-                    { "organisationId", organisationId },
-                    { "userId",         userId         }
-                },
-                SubscriptionData = new SessionSubscriptionDataOptions
-                {
-                    Metadata = new Dictionary<string, string>
-                    {
-                        { "organisationId", organisationId }
-                    }
-                }
+                CancelUrl = cancelUrl,
+                SubscriptionData = new SessionSubscriptionDataOptions { Metadata = metadata },
             };
 
             var service = new SessionService();
@@ -118,7 +111,9 @@ namespace S365.Search.Admin.UI.Services
 
             _logger.LogInformation(
                 "Created Stripe Checkout session {SessionId} for organisation '{OrgId}'.",
-                session.Id, organisationId);
+                session.Id,
+                metadata.GetValueOrDefault("orgInternalName")
+            );
 
             return session.Url;
         }
@@ -130,7 +125,10 @@ namespace S365.Search.Admin.UI.Services
         {
             var service = new CustomerService();
             await service.DeleteAsync(customerId);
-            _logger.LogInformation("Deleted Stripe customer {CustomerId} during rollback.", customerId);
+            _logger.LogInformation(
+                "Deleted Stripe customer {CustomerId} during rollback.",
+                customerId
+            );
         }
 
         /// <summary>

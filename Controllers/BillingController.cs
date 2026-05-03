@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using S365.Search.Admin.UI.Services;
 using Stripe;
@@ -18,15 +19,19 @@ namespace S365.Search.Admin.UI.Controllers
         private readonly StripeService _stripeService;
         private readonly KeycloakService _keycloakService;
         private readonly ILogger<BillingController> _logger;
+        private readonly IConfiguration _configuration;
 
         public BillingController(
             StripeService stripeService,
             KeycloakService keycloakService,
-            ILogger<BillingController> logger)
+            ILogger<BillingController> logger,
+            IConfiguration configuration
+        )
         {
-            _stripeService   = stripeService;
+            _stripeService = stripeService;
             _keycloakService = keycloakService;
-            _logger          = logger;
+            _logger = logger;
+            _configuration = configuration;
         }
 
         /// <summary>
@@ -37,7 +42,7 @@ namespace S365.Search.Admin.UI.Controllers
         [HttpPost("webhook")]
         public async Task<IActionResult> Webhook()
         {
-            var json      = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+            var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
             var signature = Request.Headers["Stripe-Signature"].ToString();
 
             Event stripeEvent;
@@ -47,11 +52,18 @@ namespace S365.Search.Admin.UI.Controllers
             }
             catch (StripeException ex)
             {
-                _logger.LogWarning("Stripe webhook signature validation failed: {Message}", ex.Message);
+                _logger.LogWarning(
+                    "Stripe webhook signature validation failed: {Message}",
+                    ex.Message
+                );
                 return BadRequest(new { error = "Invalid webhook signature." });
             }
 
-            _logger.LogInformation("Stripe webhook received: {EventType} {EventId}", stripeEvent.Type, stripeEvent.Id);
+            _logger.LogInformation(
+                "Stripe webhook received: {EventType} {EventId}",
+                stripeEvent.Type,
+                stripeEvent.Id
+            );
 
             try
             {
@@ -66,7 +78,10 @@ namespace S365.Search.Admin.UI.Controllers
                         break;
 
                     default:
-                        _logger.LogInformation("Unhandled Stripe event type: {EventType}", stripeEvent.Type);
+                        _logger.LogInformation(
+                            "Unhandled Stripe event type: {EventType}",
+                            stripeEvent.Type
+                        );
                         break;
                 }
             }
@@ -74,18 +89,25 @@ namespace S365.Search.Admin.UI.Controllers
             {
                 // Transient infrastructure failure (Keycloak unreachable, timeout, etc.).
                 // Return 5xx so Stripe retries — the payment succeeded and the user must be enabled.
-                _logger.LogError(ex,
+                _logger.LogError(
+                    ex,
                     "Transient error processing Stripe webhook event {EventId}. Returning 500 for Stripe retry.",
-                    stripeEvent.Id);
-                return StatusCode(500, new { error = "Upstream service temporarily unavailable. Stripe should retry." });
+                    stripeEvent.Id
+                );
+                return StatusCode(
+                    500,
+                    new { error = "Upstream service temporarily unavailable. Stripe should retry." }
+                );
             }
             catch (Exception ex)
             {
                 // Non-retryable business logic error (bad metadata, etc.).
                 // Return 200 so Stripe does not retry endlessly; the error is logged for manual investigation.
-                _logger.LogError(ex,
+                _logger.LogError(
+                    ex,
                     "Non-retryable error processing Stripe webhook event {EventId}. Manual intervention may be required.",
-                    stripeEvent.Id);
+                    stripeEvent.Id
+                );
             }
 
             return Ok();
@@ -105,30 +127,38 @@ namespace S365.Search.Admin.UI.Controllers
             try
             {
                 var service = new SessionService();
-                var session = await service.GetAsync(session_id, new SessionGetOptions
-                {
-                    Expand = new System.Collections.Generic.List<string> { "line_items", "subscription" }
-                });
+                var session = await service.GetAsync(
+                    session_id,
+                    new SessionGetOptions
+                    {
+                        Expand = new System.Collections.Generic.List<string>
+                        {
+                            "line_items",
+                            "subscription",
+                        },
+                    }
+                );
 
                 if (session.PaymentStatus != "paid" && session.Status != "complete")
                     return BadRequest(new { error = "Payment not completed." });
 
-                var planName = session.LineItems?.Data?.Count > 0
-                    ? session.LineItems.Data[0].Description
-                    : "your subscription";
+                var planName =
+                    session.LineItems?.Data?.Count > 0
+                        ? session.LineItems.Data[0].Description
+                        : "your subscription";
 
                 // Omit PII (customerEmail) and internal IDs (subscriptionId) from the anonymous
                 // response — session IDs appear in browser history and referrer headers, so any
                 // captured ID should not leak customer data or billing identifiers.
-                return Ok(new
-                {
-                    status   = "success",
-                    planName,
-                });
+                return Ok(new { status = "success", planName });
             }
             catch (StripeException ex)
             {
-                _logger.LogWarning("Failed to retrieve checkout session {SessionId}: {Message}", session_id, ex.Message);
+                _logger.LogWarning(
+                    "Failed to retrieve checkout session {SessionId}: {Message}",
+                    session_id,
+                    ex.Message
+                );
                 return BadRequest(new { error = "Unable to retrieve checkout session." });
             }
         }
@@ -140,35 +170,96 @@ namespace S365.Search.Admin.UI.Controllers
             if (stripeEvent.Data.Object is not Session session)
                 return;
 
-            session.Metadata.TryGetValue("organisationId", out var organisationId);
-            session.Metadata.TryGetValue("userId", out var userId);
-            var stripeCustomerId = session.CustomerId;
-            var subscriptionId   = session.SubscriptionId;
+            var invoice = stripeEvent.Data.Object as Invoice;
 
-            if (string.IsNullOrEmpty(organisationId) || string.IsNullOrEmpty(userId))
-            {
-                _logger.LogWarning(
-                    "checkout.session.completed missing organisationId or userId in metadata. SessionId={Id}", session.Id);
+            // Recurring subscription, not necessary to create new organisation
+            if (invoice.BillingReason != "subscription_create")
                 return;
-            }
 
-            _logger.LogInformation(
-                "Payment confirmed for org={OrgId} user={UserId}. Enabling account.", organisationId, userId);
+            var subscription = new SubscriptionService().GetAsync(session.SubscriptionId).Result;
+            var meta = subscription.Metadata;
 
             var adminToken = await _keycloakService.GetAdminTokenAsync();
 
-            // Enable the user so they can log in
-            await _keycloakService.EnableUserAsync(adminToken, userId);
+            string orgId,
+                userId;
 
-            // Store Stripe IDs on the Keycloak org for future billing lookups
-            if (!string.IsNullOrEmpty(stripeCustomerId) && !string.IsNullOrEmpty(subscriptionId))
+            try
             {
-                await _keycloakService.UpdateOrgStripeAttributesAsync(
-                    adminToken, organisationId, stripeCustomerId, subscriptionId);
+                orgId = await _keycloakService.CreateOrganizationAsync(
+                    adminToken,
+                    meta["orgInternalName"],
+                    meta["orgDisplayName"],
+                    meta["contactPerson"],
+                    meta["contactPhone"],
+                    meta["orgUrl"]
+                );
+            }
+            catch (Exception ex) when (ex.Message.Contains("Conflict"))
+            {
+                _logger.LogWarning(
+                    "Duplicate webhook for subscription {SubId}.",
+                    session.SubscriptionId
+                );
+
+                return;
             }
 
-            _logger.LogInformation(
-                "Organisation {OrgId} is now active. User {UserId} enabled.", organisationId, userId);
+            try
+            {
+                userId = await _keycloakService.CreateUserAsync(
+                    adminToken,
+                    meta["email"],
+                    password: null,
+                    meta["contactPerson"],
+                    meta["orgInternalName"],
+                    enabled: true,
+                    pendingOrgId: orgId
+                );
+            }
+            catch (Exception ex) when (ex.Message.Contains("Conflict"))
+            {
+                await _keycloakService.DeleteOrganizationAsync(adminToken, orgId);
+                _logger.LogError(
+                    "User {Email} already exists on subscription {SubId}.",
+                    meta["email"],
+                    session.SubscriptionId
+                );
+
+                return;
+            }
+
+            await _keycloakService.AddUserToOrganizationAsync(adminToken, orgId, userId);
+
+            var clientId = _configuration["KeycloakAuthentication:ClientId"] ?? "osp-adminui";
+            var clientUuid = await _keycloakService.GetClientUuidAsync(adminToken, clientId);
+
+            var (roleId, roleName) = await _keycloakService.GetClientRoleAsync(
+                adminToken,
+                clientUuid,
+                "org-admin"
+            );
+
+            await _keycloakService.AssignClientRoleToUserAsync(
+                adminToken,
+                userId,
+                clientUuid,
+                roleId,
+                roleName
+            );
+
+            var appBaseUrl =
+                _configuration["Application:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+            var redirectUri = appBaseUrl.TrimEnd('/') + "/";
+            await _keycloakService.SendExecuteActionsEmailAsync(
+                adminToken,
+                userId,
+                clientId,
+                redirectUri
+            );
+
+            _logger.LogInformation("Organisation '{OrgName}' provisioned.", meta["orgDisplayName"]);
+            return;
         }
 
         private Task HandleSubscriptionDeletedAsync(Event stripeEvent)
@@ -179,12 +270,17 @@ namespace S365.Search.Admin.UI.Controllers
             subscription.Metadata.TryGetValue("organisationId", out var organisationId);
             if (string.IsNullOrEmpty(organisationId))
             {
-                _logger.LogWarning("customer.subscription.deleted missing organisationId in metadata.");
+                _logger.LogWarning(
+                    "customer.subscription.deleted missing organisationId in metadata."
+                );
                 return Task.CompletedTask;
             }
 
             _logger.LogInformation(
-                "Subscription cancelled for org={OrgId}. Sub={SubId}.", organisationId, subscription.Id);
+                "Subscription cancelled for org={OrgId}. Sub={SubId}.",
+                organisationId,
+                subscription.Id
+            );
 
             // Future: mark org subscription status as Cancelled in Keycloak attributes
             // For now we log — the dashboard subscription status story can extend this
