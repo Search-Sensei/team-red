@@ -14,6 +14,9 @@ import { IAccount } from "../../store/models/account.interface";
 import { IStateType } from "../../store/models/root.interface";
 import QueryRulesMessageAlert from "../QueryRules/QueryRuleMessageAlert";
 import QueryRulesList from "../QueryRules/QueryRulesList";
+import fetcher from "../Fetcher";
+import { createRequestOptions } from "../../store/actions/adminsettings.actions";
+import { HttpMethod } from "../../store/models/httpmethod";
 
 type SubscriptionInfo = {
     status: string;
@@ -37,7 +40,7 @@ function SubscriptionCard() {
         if (!canViewBilling) return;
         let cancelled = false;
         setLoading(true);
-        fetch("/portal/api/subscription", { credentials: "include" })
+        fetcher("/portal/api/subscription", createRequestOptions(HttpMethod.Get))
             .then(async (res) => {
                 if (res.status === 404) return null;
                 if (!res.ok) throw new Error(`Error ${res.status}`);

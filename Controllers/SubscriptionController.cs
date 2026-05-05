@@ -12,7 +12,7 @@ namespace S365.Search.Admin.UI.Controllers
 {
     [ApiController]
     [Route("portal/api/subscription")]
-    [Authorize]
+    [Authorize(Roles = "org-admin,admin")]
     public class SubscriptionController : ControllerBase
     {
         private readonly StripeService _stripeService;

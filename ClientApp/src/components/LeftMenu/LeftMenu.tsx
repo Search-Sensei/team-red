@@ -187,7 +187,7 @@ const LeftMenu: React.FC = () => {
           </li>
         )}
 
-        {canViewBilling && (
+        {(adminSettingsState.adminSettings.showAdminSidebar?.customerBilling?.isEnabled !== false) && canViewBilling && (
           <li className="nav-item">
             <Link className="nav-link" to="/customer-billing">
               <i className="fas fa-fw fa-credit-card"></i>

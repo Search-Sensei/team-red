@@ -182,7 +182,7 @@ const CustomerBilling: React.FC = () => {
     useEffect(() => {
         let cancelled = false;
         setSubsLoading(true);
-        fetch("/portal/api/subscription/list", { credentials: "include" })
+        fetcher("/portal/api/subscription/list", createRequestOptions(HttpMethod.Get))
             .then(async (res) => {
                 if (!res.ok) throw new Error(`Error ${res.status}`);
                 return res.json() as Promise<SubscriptionInfo[]>;
@@ -197,7 +197,7 @@ const CustomerBilling: React.FC = () => {
     useEffect(() => {
         let cancelled = false;
         setInvoicesLoading(true);
-        fetch("/portal/api/subscription/invoices", { credentials: "include" })
+        fetcher("/portal/api/subscription/invoices", createRequestOptions(HttpMethod.Get))
             .then(async (res) => {
                 if (!res.ok) throw new Error(`Error ${res.status}`);
                 return res.json() as Promise<Invoice[]>;
@@ -253,18 +253,18 @@ const CustomerBilling: React.FC = () => {
         setChangingPlan(true);
         setChangePlanError(null);
         try {
-            const res = await fetch("/portal/api/subscription/change", {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ planId: selectedPlan }),
-            });
+            const res = await fetcher(
+                "/portal/api/subscription/change",
+                createRequestOptions(HttpMethod.Post, JSON.stringify({ planId: selectedPlan }))
+            );
             if (!res.ok) {
                 const body = await res.json().catch(() => ({}));
                 throw new Error(body?.error || `Error ${res.status}`);
             }
             // Reload subscriptions after change
-            const updated = await fetch("/portal/api/subscription/list", { credentials: "include" }).then(r => r.json());
+            const listRes = await fetcher("/portal/api/subscription/list", createRequestOptions(HttpMethod.Get));
+            if (!listRes.ok) throw new Error(`Failed to reload subscriptions: ${listRes.status}`);
+            const updated = await listRes.json() as SubscriptionInfo[];
             setSubs(updated);
             setChangePlanOpen(false);
             setSelectedPlan("");

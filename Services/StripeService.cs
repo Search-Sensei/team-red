@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -172,13 +174,15 @@ namespace S365.Search.Admin.UI.Services
 
         /// <summary>
         /// Changes the plan on an existing subscription to a new Stripe price.
-        /// Uses proration so charges are adjusted immediately.
+        /// ProrationBehavior is "none": the plan switches immediately but the new price
+        /// applies from the next billing cycle — no mid-cycle proration charges.
         /// </summary>
         public async Task<Subscription> ChangeSubscriptionPlanAsync(string subscriptionId, string newPriceId)
         {
             var service = new SubscriptionService();
-            var sub = await service.GetAsync(subscriptionId);
-            var itemId = sub.Items.Data[0].Id;
+            var sub    = await service.GetAsync(subscriptionId);
+            var itemId = sub.Items?.Data?.FirstOrDefault()?.Id
+                ?? throw new InvalidOperationException($"Subscription {subscriptionId} has no line items.");
 
             var options = new SubscriptionUpdateOptions
             {
