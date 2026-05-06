@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using S365.Search.Admin.UI.Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 
 namespace S365.Search.Admin.UI.Services
@@ -856,29 +857,16 @@ namespace S365.Search.Admin.UI.Services
             getResponse.EnsureSuccessStatusCode();
 
             var json = await getResponse.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
 
-            // Rebuild attributes preserving existing ones and adding Stripe IDs
-            var attributes = new Dictionary<string, string[]>();
-            if (doc.RootElement.TryGetProperty("attributes", out var existingAttrs))
-            {
-                foreach (var attr in existingAttrs.EnumerateObject())
-                {
-                    var values = attr.Value.EnumerateArray()
-                        .Select(v => v.GetString() ?? "")
-                        .ToArray();
-                    attributes[attr.Name] = values;
-                }
-            }
+            // Keycloak's PUT /organizations/{id} requires the full org representation — not just attributes.
+            // Parse the full org JSON, update only the attributes, and PUT everything back.
+            var orgObj = JObject.Parse(json);
+            var attributesObj = (orgObj["attributes"] as JObject) ?? new JObject();
+            attributesObj["stripeCustomerId"]     = new JArray(stripeCustomerId);
+            attributesObj["stripeSubscriptionId"] = new JArray(stripeSubscriptionId);
+            orgObj["attributes"] = attributesObj;
 
-            attributes["stripeCustomerId"]     = new[] { stripeCustomerId };
-            attributes["stripeSubscriptionId"] = new[] { stripeSubscriptionId };
-
-            var putPayload = new { attributes };
-            var content = new StringContent(
-                System.Text.Json.JsonSerializer.Serialize(putPayload),
-                Encoding.UTF8,
-                "application/json");
+            var content = new StringContent(orgObj.ToString(Formatting.None), Encoding.UTF8, "application/json");
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
             var putUrl = $"/admin/realms/{realm}/organizations/{orgId}";
@@ -896,6 +884,70 @@ namespace S365.Search.Admin.UI.Services
             _logger.LogInformation(
                 "Updated org {OrgId} with stripeCustomerId={CustomerId} stripeSubscriptionId={SubId}.",
                 orgId, stripeCustomerId, stripeSubscriptionId);
+        }
+
+        /// <summary>
+        /// Returns the UUID of the first organisation the given user belongs to.
+        /// </summary>
+        public async Task<string?> GetUserOrgUuidAsync(string adminToken, string userId)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var url = $"/admin/realms/{realm}/organizations/members/{userId}/organizations";
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+
+            foreach (var org in doc.RootElement.EnumerateArray())
+            {
+                if (org.TryGetProperty("id", out var idProp))
+                {
+                    var id = idProp.GetString();
+                    if (!string.IsNullOrEmpty(id)) return id;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Retrieves the Stripe customer and subscription IDs stored on a Keycloak organisation's attributes.
+        /// </summary>
+        public async Task<(string? CustomerId, string? SubscriptionId)> GetOrgStripeAttributesAsync(string adminToken, string orgId)
+        {
+            EnsureEnabled();
+
+            var realm = _configuration["KeycloakAuthentication:Realm"];
+            if (string.IsNullOrWhiteSpace(realm))
+                throw new InvalidOperationException("Cannot find Keycloak realm. Configuration missing.");
+
+            var getUrl = $"/admin/realms/{realm}/organizations/{orgId}";
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+            var response = await _httpClient.GetAsync(getUrl);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+
+            string? customerId = null;
+            string? subscriptionId = null;
+
+            if (doc.RootElement.TryGetProperty("attributes", out var attrs))
+            {
+                if (attrs.TryGetProperty("stripeCustomerId", out var cid) && cid.ValueKind == JsonValueKind.Array)
+                    customerId = cid.EnumerateArray().Select(v => v.GetString()).FirstOrDefault();
+                if (attrs.TryGetProperty("stripeSubscriptionId", out var sid) && sid.ValueKind == JsonValueKind.Array)
+                    subscriptionId = sid.EnumerateArray().Select(v => v.GetString()).FirstOrDefault();
+            }
+
+            return (customerId, subscriptionId);
         }
 
         /// <summary>
