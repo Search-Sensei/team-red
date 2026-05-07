@@ -49,9 +49,17 @@ This guide covers everything needed to configure a Keycloak instance for the Sea
 2. Scroll to **Organizations** and toggle **Enabled → On**.
 3. Save.
 
+### Disable "Verify Profile" Required Action
+
+1. Go to **Authentication → Required Actions**.
+2. Find **Verify Profile** and toggle **Enabled** off.
+3. Why: Keycloak's verify-profile screen interferes with the registration / invite flows, where the backend has already populated all required user fields. Leaving it enabled causes invited users to be sent to a profile-edit screen instead of the password-set page.
+
 ---
 
 ## 3. Client Configuration — Main App (`search-sensei`)
+
+> **Client ID note:** This guide uses `search-sensei` and `search-sensei-admin` as example client IDs. Some environments / earlier deployments use `osp-adminui` (and a separate admin service-account client) instead. Use whichever IDs match your actual realm — the configuration below applies the same way.
 
 This is the OIDC client used by the web application for user login.
 
@@ -97,6 +105,28 @@ Ensure the following scopes are added to the client:
 
 1. Go to **Clients → search-sensei → Credentials**.
 2. Copy the **Client secret** — this goes into `KeycloakAuthentication:ClientSecret` in appsettings.
+
+### Protocol Mappers
+
+The `active_tenant` user attribute must be exposed as a JWT claim — without this mapper the backend cannot read the current tenant context, and tenant switching will silently break.
+
+1. Go to **Clients → search-sensei → Client Scopes**.
+2. Open the dedicated scope (`search-sensei-dedicated` by default).
+3. Click **Add mapper → By configuration → User Attribute**.
+4. Configure:
+
+| Field | Value |
+|---|---|
+| Name | `active_tenant` |
+| User Attribute | `active_tenant` |
+| Token Claim Name | `active_tenant` |
+| Claim JSON Type | String |
+| Add to ID token | On |
+| Add to access token | On |
+| Add to userinfo | On |
+| Multivalued | Off |
+
+> **Note:** The `organization` claim is provided automatically by Keycloak when the user logs in via an organisation — no custom mapper needed for it. Client roles (`org-admin`, `admin`, `manager`, `contributor`) are also mapped automatically into `resource_access.<clientId>.roles`.
 
 ---
 
@@ -203,6 +233,22 @@ The backend stores the following as custom attributes on each Keycloak organisat
 | `stripeSubscriptionId` | Stripe webhook | Stripe subscription ID (set after payment) |
 
 No manual setup is needed for organisation attributes — they are set via the Admin API at runtime.
+
+### JWT Claims the Backend Reads
+
+`UserContextResolver.cs` parses the following claims from issued tokens, in fallback order:
+
+| Claim | Source | Used For |
+|---|---|---|
+| `active_tenant` | User Attribute mapper (see [Section 3 → Protocol Mappers](#protocol-mappers)) | Current tenant context |
+| `organization` | Automatic — present when the user logs in via an organisation | Org selected at login; also used to sync `active_tenant` |
+| `resource_access.<clientId>.roles` | Automatic — client role mapping | User roles (`admin`, `manager`, `org-admin`, `contributor`) |
+| `groups` | Group membership mapper (only if configured) | Fallback role source |
+| `realm_access.roles` | Automatic — realm role mapping | Fallback role source |
+
+### Active Tenant Sync on Login
+
+When a user logs in via an organisation different from the one stored in their `active_tenant` attribute, `OnTokenValidated` (in `KeycloakAuthenticationExtensions.cs`) compares the `organization` claim against `active_tenant`, auto-updates the user attribute via the Admin API, and refreshes the tokens so the JWT stays consistent with the org they actually logged into. No manual configuration required — it happens as long as the protocol mapper above is in place.
 
 ---
 
@@ -315,6 +361,18 @@ Copy the `keycloak-theme/search-sensei` folder to:
 | `AdminClientSecret` | Machine-to-machine client secret |
 | `RequireHttpsMetadata` | Set to `false` for local HTTP development only |
 | `CallbackPath` | Must match the redirect URI registered in Keycloak |
+
+### Storing Secrets with dotnet user-secrets (recommended for local dev)
+
+Instead of putting client secrets in `appsettings.development.json`, use the .NET secret manager so they stay outside the repo:
+
+```bash
+dotnet user-secrets set "KeycloakAuthentication:ClientSecret" "<search-sensei client secret>"
+dotnet user-secrets set "KeycloakAuthentication:AdminClientId" "search-sensei-admin"
+dotnet user-secrets set "KeycloakAuthentication:AdminClientSecret" "<search-sensei-admin client secret>"
+```
+
+These values override the corresponding `appsettings.json` keys at runtime and are stored in `~/.microsoft/usersecrets/`. In Azure App Service, set the same keys as environment variables using `__` as the separator (e.g. `KeycloakAuthentication__ClientSecret`).
 
 ---
 
