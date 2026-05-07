@@ -130,6 +130,18 @@ WHERE u.id > 3 ORDER BY u.id;"
 
 `platform-admin` users should appear with role **Admin**; everyone else with **Viewer**.
 
+### 8. Apply the custom theme
+
+[`Bookstack/bookstack.html`](../Bookstack/bookstack.html) holds the Search Sensei sidebar styling, the custom shelves/books navigation, and a "← Back to Console" footer button that links back to the Admin UI. BookStack does not load this file from disk — paste it into the running instance:
+
+1. Sign in as the `platform-admin` from step 4
+2. Click your avatar (top-right) → **Settings** → **Customization**
+3. Find the **Custom HTML head content** field and paste the entire contents of [`Bookstack/bookstack.html`](../Bookstack/bookstack.html)
+4. Click **Save Settings**
+5. Hard-reload any BookStack page — the left sidebar should turn dark green and the "← Back to Console" button should appear at its bottom
+
+The button's `href` is hardcoded to `http://localhost:5000/adminui` for local development. For other environments, edit the `link.href` value inside the `addBackToConsoleButton` function before pasting — see [Production deployment § 1](#1-replace-hostdockerinternal-with-real-fqdns).
+
 ### Cleanup stuck users
 
 If anyone logged in before step 5, they exist with no role. Remove them — they will be recreated correctly on next login:
@@ -189,6 +201,7 @@ Hostnames change in three places that must stay consistent:
 | Your working compose file (copied from [`docker-compose.bookstack-example.yml`](../docker/docker-compose.bookstack-example.yml)) → `configs.bookstack_env.content` | `APP_URL=` | `https://kb.company.com` |
 | Same compose file | `OIDC_ISSUER=` | `https://login.company.com/realms/<realm>` |
 | Keycloak admin console → Clients → `bookstack` → Settings | Valid redirect URIs / Post logout redirect URIs / Web origins / Root URL / Home URL | `https://kb.company.com/...` |
+| [`Bookstack/bookstack.html`](../Bookstack/bookstack.html) → `addBackToConsoleButton()` → `link.href` | `http://localhost:5000/adminui` | `https://app.company.com/adminui` |
 
 ### 2. Replace the database container with a managed service
 

@@ -200,6 +200,23 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  function addBackToConsoleButton() {
+    if (leftSidebar.querySelector(".back-to-console-wrap")) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "back-to-console-wrap";
+
+    const link = document.createElement("a");
+    link.href = "http://localhost:5000/adminui";
+    link.className = "back-to-console";
+    link.textContent = "← Back to Console";
+
+    wrap.appendChild(link);
+    leftSidebar.appendChild(wrap);
+  }
+
+  addBackToConsoleButton();
+
 });
 </script>
 
@@ -445,5 +462,39 @@ body > header#header {
 .tri-layout-right h4:first-child,
 .tri-layout-right h3:first-child {
   display: none !important;
+}
+
+/* BACK TO CONSOLE BUTTON (sidebar footer) */
+.tri-layout-left {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.back-to-console-wrap {
+  margin-top: auto !important;
+  padding: 16px 18px 22px 18px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  background-color: #1d5d66 !important;
+}
+
+.back-to-console {
+  display: block !important;
+  padding: 10px 14px !important;
+  background: rgba(141, 233, 225, 0.10) !important;
+  border: 1px solid rgba(141, 233, 225, 0.28) !important;
+  border-radius: 6px !important;
+  color: #d7f4f1 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  transition: background 0.15s ease, color 0.15s ease !important;
+}
+
+.back-to-console:hover {
+  background: rgba(141, 233, 225, 0.22) !important;
+  color: #ffffff !important;
 }
 </style>
