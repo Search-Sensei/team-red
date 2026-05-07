@@ -24,7 +24,7 @@ This guide covers everything needed to configure a Keycloak instance for the Sea
 
 ## 1. Prerequisites
 
-- Keycloak **26.0+** (Organizations feature requires 26+)
+- Keycloak **26.6+** (Organizations feature requires 26+)
 - Docker or a hosted Keycloak instance
 - Access to the Keycloak Admin Console
 
